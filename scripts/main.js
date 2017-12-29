@@ -1,10 +1,13 @@
 // using requrie js to make sure we have all our dependinces
-define('THREE', ['scripts/three.js'], function ( THREE ) {
+define('THREE', ['scripts/three.js'], function (THREE) {
   window.THREE = THREE;
   return THREE;
 });
 // ColladaLoader used to load in the sketchup export requries three js so configuring requirejs to know that
 requirejs.config({
+  paths: {
+    TweenMax: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min'
+  },
   shim: {
     ColladaLoader: {
       deps: ['THREE']
@@ -15,8 +18,9 @@ requirejs.config({
   }
 });
 // load our modules in this order then run our code.
-requirejs(['THREE', 'ColladaLoader','OrbitControls'], function (THREE) {
+requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THREE) {
   var camera, scene, renderer, orbit;
+  var modelRef = {};
   init();
   animate();
   function init () {
@@ -31,11 +35,22 @@ requirejs(['THREE', 'ColladaLoader','OrbitControls'], function (THREE) {
     orbit = new THREE.OrbitControls(camera);
     orbit.maxPolarAngle = 1.4095;
     orbit.minPolarAngle = 1.0799;
+    orbit.enablePan = false;
+    orbit.enableZoom = false;
     document.addEventListener('keydown', (e) => {
       if (e.key === 'p') console.log({orbit: orbit.getPolarAngle()});
-      
+      else if (e.key === 'r') console.log({modelRef: modelRef});
+      else if (e.key === '='){
+        modelRef.outerShell.map((mesh) => {
+          mesh.material.opacity += 0.0005;
+        });
+      }
+      else if (e.key === '-'){
+        modelRef.outerShell.map((mesh) => {
+          mesh.material.opacity -= 0.0005;
+        });
+      }
     });
-    // orbit.
 
     // scene setup
     scene = new THREE.Scene();
@@ -60,9 +75,10 @@ requirejs(['THREE', 'ColladaLoader','OrbitControls'], function (THREE) {
       }, []);
       // Get the outer shell by filter from the larges list of meshes
       var outerShell = meshes.filter((mesh) => { return mesh.material.name === 'material_8'; });
-      outerShell.map((mesh) => { mesh.material.opacity = 0.5; });
-      // // var material = new THREE.MeshPhongMaterial({color: 0xFF0000});
-      // var finalMesh = new THREE.Mesh(meshGlob, baseMat);
+      outerShell.map((mesh) => { mesh.material.opacity = 0.1; });
+      modelRef.outerShell = outerShell;
+      // var material = new THREE.MeshPhongMaterial({color: 0xFF0000});
+      // var  =finalMesh new THREE.Mesh(meshGlob, baseMat);
       console.log({ meshes: meshes, outerShell: outerShell });
       // model.material = baseMat;
       scene.add(model);
