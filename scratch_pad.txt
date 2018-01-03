@@ -1,0 +1,10 @@
+    var labelNames = [
+      ['Main lobby & administrative offices', 'mlao'],
+      ['Rehearsal Hall', 'rh'],
+      ['Pikes Peak', 'pp'],
+      ['Schauer Theater Entrance', 'ste'],
+      ['Art Gallery', 'ag'],
+      ['Ruth A. Knoll Theater', 'rakt'],
+      ['Lodge/Ante room', 'lar'],
+      ['Auto Museum', 'am']
+    ];
