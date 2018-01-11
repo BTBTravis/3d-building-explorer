@@ -81,7 +81,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
 
       // sketchup import
       var loader = new THREE.ColladaLoader();
-      loader.load('models/arts_center_003.dae', function (result) {
+      loader.load('models/arts_center_004.dae', function (result) {
         // import matrix fixes
         result.scene.applyMatrix(result.scene.matrix.identity());
         result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
@@ -95,12 +95,23 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           else if (currentItem.type === 'Group') arr = currentItem.children.reduce(sceneToMeshArray, arr);
           return arr;
         }, []);
+
+        var meshesByMaterial = meshes.reduce(function (obj, mesh) {
+          if (typeof obj[mesh.material.name] === 'undefined') obj[mesh.material.name] = [];
+          obj[mesh.material.name].push(mesh);
+          return obj;
+        }, {});
+        console.log({meshesByMaterial: meshesByMaterial});
+        // hide location cubes by moving them to a layer that the camera is not rendering
+        meshesByMaterial.location.map(function (mesh) {
+          mesh.layers.set(2);
+        });
         // Get the outer shell by filter from the larges list of meshes
         var outerShell = meshes.filter((mesh) => { return mesh.material.name === 'material_8'; });
         outerShell.map((mesh) => { mesh.material.opacity = 0.1; });
         modelRef.outerShell = outerShell;
         // move labels into place
-        var locationCubes = meshes.filter((mesh) => { return mesh.material.name === 'location'; });
+        var locationCubes = meshesByMaterial.location;
         // locationCubes[6].material = new THREE.MeshBasicMaterial({ color: 'green' });
         var labelPairs = {
           'mlao': {
