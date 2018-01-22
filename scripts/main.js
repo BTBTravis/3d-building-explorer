@@ -25,14 +25,14 @@ requirejs.config({
 });
 // load our modules in this order then run our code.
 requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
+  var devMode = false;
   var camera, scene, svgScene, renderer, orbit, meshesByMaterial;
-  var createDebugLine;
-  var modelRef = {};
+  // var createDebugLine;
   // define base materials
   // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
 
-  var baseMaterial = new THREE.MeshLambertMaterial({color: baseColor});
+  var baseMaterial = new THREE.MeshLambertMaterial({ color: baseColor });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
     meshesByMaterial[key].map((mesh) => {
@@ -59,7 +59,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   });
 
   // animate();
-  function init() {
+  function init () {
     return new Promise((resolve, reject) => {
       // camera setup
       // camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 100, 10000);
@@ -70,7 +70,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       camera.lookAt(new THREE.Vector3(0, 0, 0));
 
       // orbit setup
-      // orbit = new THREE.OrbitControls(camera);
+      if (devMode) orbit = new THREE.OrbitControls(camera);
       // orbit.maxPolarAngle = 1.4095;
       // orbit.minPolarAngle = 1.0799;
       // orbit.enablePan = false;
@@ -109,7 +109,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       // floor plane
       var satelliteTx = new THREE.TextureLoader().load('/assets/js/3D/textures/arts_center_map.jpg');
       var geometry = new THREE.PlaneGeometry(20000, 20000, 1);
-      var material = new THREE.MeshBasicMaterial({map: satelliteTx });
+      var material = new THREE.MeshBasicMaterial({ map: satelliteTx });
       // var material = new THREE.MeshBasicMaterial({color: 'black'});
       var plane = new THREE.Mesh(geometry, material);
       var factor = 1.25;
@@ -119,149 +119,66 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       scene.add(plane);
 
       // click through navigation
-      // var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
-      // var highlightMaterialNames = navLinks.reduce((arr, el) => {
-      //   var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
-      //   if (typeof data.mat !== 'undefined') arr.push(data.mat);
-      //   return arr;
-      // }, []);
-      // console.log({highlightMaterialNames: highlightMaterialNames});
-      // navLinks.map((linkElm, i) => {
-      //   var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
-      //   console.log({ data: data, i: i });
-      //   linkElm.addEventListener('click', (e) => {
-      //     // clear all other highlights
-      //     highlightMaterialNames.map((name) => {
-      //       setMat(name);
-      //     });
-
-      //     var tweenColor = function () {
-      //       // highlight this room
-      //       // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
-      //       var newColor = new THREE.Color('hsl(0, 0%, 100%)');
-      //       var newMat = new THREE.MeshPhongMaterial({color: newColor});
-      //       setMat(data.mat, newMat);
-      //       var initalColorVals = {a: 0, b: 0, c: 100};
-      //       var updateColor = function () {
-      //         newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
-      //         newMat.color = newColor;
-      //       };
-      //       TweenLite.to(initalColorVals, 1, {
-      //         a: 4,
-      //         b: 90,
-      //         c: 58,
-      //         onUpdate: updateColor
-      //       });
-      //     };
-      //     var start = {
-      //       x: camera.position.x,
-      //       y: camera.position.y,
-      //       z: camera.position.z,
-      //       xr: camera.rotation.x,
-      //       yr: camera.rotation.y,
-      //       zr: camera.rotation.z
-      //     };
-      //     var tween = TweenLite.to(start, 1, {
-      //       x: data.pos.x,
-      //       y: data.pos.y,
-      //       z: data.pos.z,
-      //       xr: data.rot._x,
-      //       yr: data.rot._y,
-      //       zr: data.rot._z,
-      //       onUpdate: updateCameraPos,
-      //       onComplete: typeof data.mat !== 'undefined' ? tweenColor : null
-      //     });
-      //     // each time the tween updates this function will be called.
-      //     function updateCameraPos () {
-      //       camera.position.set(start.x, start.y, start.z);
-      //       camera.rotation.set(start.xr, start.yr, start.zr, 'XYZ');
-      //       camera.updateMatrix();
-      //     }
-      //   });
-      // });
-
-      // matrix camera transform
-      // var arrayTOobject = function (arr) {
-      //   var rv = {};
-      //   for (var i = 0; i < arr.length; ++i) rv[i] = arr[i];
-      //   return rv;
-      // };
-      var goalVals = JSON.parse('{"px":1034.2891868501865,"py":644.345722879885,"pz":-781.7799224479268,"qw":0.8148415951617541,"qx":-0.17521558256671904,"qy":0.5402209163299482,"qz":0.11616383249395688,"sx":1,"sy":1,"sz":1}');
-      var testELm = document.querySelector('nav.floorplan-nav li');
-      testELm.addEventListener('click', function () {
-        var currentCameraVals = flattenThreeObj(camera);
-        var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
-        console.log({vals: vals, goalVals: goalVals});
-        var updateCam = function () {
-          console.log({vals: vals, goalVals: goalVals});
-          camera.position.set(vals.px, vals.py, vals.pz);
-          camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
-          camera.scale.set(vals.sx, vals.sy, vals.sz);
-          camera.updateMatrix();
-          // camera.updateMatrixWorld(true);
-          // camera.matrixAutoUpdate = false;
-        };
-        goalVals.onUpdate = updateCam;
-        TweenLite.to(vals, 1, goalVals);
+      var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
+      var highlightMaterialNames = navLinks.reduce((arr, el) => {
+        var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
+        if (typeof data.mat !== 'undefined') arr.push(data.mat);
+        return arr;
+      }, []);
+      console.log({ highlightMaterialNames: highlightMaterialNames });
+      navLinks.map((linkElm, i) => {
+        var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
+        console.log({ data: data, i: i });
+        linkElm.addEventListener('click', (e) => {
+          // active styles
+          navLinks.map(function (el) { el.classList.remove('default'); });
+          linkElm.classList.add('default');
+          // clear all other highlights
+          highlightMaterialNames.map((name) => {
+            setMat(name);
+          });
+          var tweenColor = function () {
+            // highlight this room
+            // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
+            var newColor = new THREE.Color('hsl(0, 0%, 100%)');
+            var newMat = new THREE.MeshPhongMaterial({ color: newColor });
+            setMat(data.mat, newMat);
+            var initalColorVals = { a: 0, b: 0, c: 100 };
+            var updateColor = function () {
+              newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
+              newMat.color = newColor;
+            };
+            TweenLite.to(initalColorVals, 1, {
+              a: 4,
+              b: 90,
+              c: 58,
+              onUpdate: updateColor
+            });
+          };
+          var goalVals = data.transform;
+          var currentCameraVals = flattenThreeObj(camera);
+          var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
+          console.log({ vals: vals, goalVals: goalVals });
+          var updateCam = function () {
+            console.log({ vals: vals, goalVals: goalVals });
+            camera.position.set(vals.px, vals.py, vals.pz);
+            camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
+            camera.scale.set(vals.sx, vals.sy, vals.sz);
+            camera.updateMatrix();
+          };
+          goalVals.onUpdate = updateCam;
+          if (typeof data.mat !== 'undefined') goalVals.onComplete = tweenColor;
+          TweenLite.to(vals, 1, goalVals);
+        });
       });
 
-      // navLinks.map((linkElm, i) => {
-      //   var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
-      //   console.log({ data: data, i: i });
-      //   linkElm.addEventListener('click', (e) => {
-      //     // clear all other highlights
-      //     highlightMaterialNames.map((name) => {
-      //       setMat(name);
-      //     });
-
-      //     var tweenColor = function () {
-      //       // highlight this room
-      //       // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
-      //       var newColor = new THREE.Color('hsl(0, 0%, 100%)');
-      //       var newMat = new THREE.MeshPhongMaterial({color: newColor});
-      //       setMat(data.mat, newMat);
-      //       var initalColorVals = {a: 0, b: 0, c: 100};
-      //       var updateColor = function () {
-      //         newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
-      //         newMat.color = newColor;
-      //       };
-      //       TweenLite.to(initalColorVals, 1, {
-      //         a: 4,
-      //         b: 90,
-      //         c: 58,
-      //         onUpdate: updateColor
-      //       });
-      //     };
-      //     var start = {
-      //       x: camera.position.x,
-      //       y: camera.position.y,
-      //       z: camera.position.z,
-      //       xr: camera.rotation.x,
-      //       yr: camera.rotation.y,
-      //       zr: camera.rotation.z
-      //     };
-      //     var tween = TweenLite.to(start, 1, {
-      //       x: data.pos.x,
-      //       y: data.pos.y,
-      //       z: data.pos.z,
-      //       xr: data.rot._x,
-      //       yr: data.rot._y,
-      //       zr: data.rot._z,
-      //       onUpdate: updateCameraPos,
-      //       onComplete: typeof data.mat !== 'undefined' ? tweenColor : null
-      //     });
-      //     // each time the tween updates this function will be called.
-      //     function updateCameraPos () {
-      //       camera.position.set(start.x, start.y, start.z);
-      //       camera.rotation.set(start.xr, start.yr, start.zr, 'XYZ');
-      //       camera.updateMatrix();
-      //     }
-      //   });
-      // });
+      var j = 1;
+      var g = 3;
+      var p = j + g;
 
       // sketchup import
       var loader = new THREE.ColladaLoader();
-      loader.load('/assets/js/3D/models/arts_center_006.dae', function (result) {
+      loader.load('/assets/js/3D/models/arts_center_007.dae', function (result) {
         // import matrix fixes
         result.scene.applyMatrix(result.scene.matrix.identity());
         result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
@@ -286,7 +203,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
         //   mesh.layers.set(2);
         // });
         // set all to base mat
-        for (var key in meshesByMaterial) if(key !== 'shell') setMat(key);
+        for (var key in meshesByMaterial) if (key !== 'shell') setMat(key);
         // Get the outer shell by filter from the larges list of meshes
         // var outerShell = meshes.filter((mesh) => { return mesh.material.name === 'material_8'; });
         // setMat('shell', new THREE.MeshBasicMaterial({color: 'black', opacity: 0.4}));
@@ -303,7 +220,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           return mats;
         }, []);
 
-        console.log({mats: mats, meshesByMaterial: meshesByMaterial});
+        console.log({ mats: mats, meshesByMaterial: meshesByMaterial });
 
         scene.add(model);
         resolve(); // fulfilled
@@ -329,7 +246,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   }
   function animate() {
     requestAnimationFrame(animate);
-    // orbit.update();
+    if (devMode) orbit.update();
     renderer.render(scene, camera);
   }
 });
