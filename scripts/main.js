@@ -39,6 +39,21 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       mesh.material = mat;
     });
   };
+  // util
+  var flattenThreeObj = function (threeobj) {
+    return {
+      px: threeobj.position.x,
+      py: threeobj.position.y,
+      pz: threeobj.position.z,
+      qw: threeobj.quaternion._w,
+      qx: threeobj.quaternion._x,
+      qy: threeobj.quaternion._y,
+      qz: threeobj.quaternion._z,
+      sx: threeobj.scale.x,
+      sy: threeobj.scale.y,
+      sz: threeobj.scale.z
+    };
+  };
   init().then(function (x) {
     animate();
   });
@@ -52,18 +67,18 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       camera.position.x = 800;
       camera.position.y = 1400;
       camera.position.z = 3000;
-      // camera.lookAt(new THREE.Vector3(0, 0, 0));
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
 
       // orbit setup
-      orbit = new THREE.OrbitControls(camera);
+      // orbit = new THREE.OrbitControls(camera);
       // orbit.maxPolarAngle = 1.4095;
       // orbit.minPolarAngle = 1.0799;
       // orbit.enablePan = false;
       // orbit.enableZoom = false;
       // TODO: Remove this dev code
       document.addEventListener('keydown', (e) => {
-        if (e.key === 't') {
-          console.log({ cameraMatrix: camera.matrix });
+        if (e.key === 'm') {
+          console.log(JSON.stringify(flattenThreeObj(camera)));
         } else if (e.key === 'p') {
           console.log(JSON.stringify({ pos: camera.position, rot: camera.rotation }));
         }
@@ -104,66 +119,145 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       scene.add(plane);
 
       // click through navigation
-      var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
-      var highlightMaterialNames = navLinks.reduce((arr, el) => {
-        var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
-        if (typeof data.mat !== 'undefined') arr.push(data.mat);
-        return arr;
-      }, []);
-      console.log({highlightMaterialNames: highlightMaterialNames});
-      navLinks.map((linkElm, i) => {
-        var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
-        console.log({ data: data, i: i });
-        linkElm.addEventListener('click', (e) => {
-          // clear all other highlights
-          highlightMaterialNames.map((name) => {
-            setMat(name);
-          });
+      // var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
+      // var highlightMaterialNames = navLinks.reduce((arr, el) => {
+      //   var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
+      //   if (typeof data.mat !== 'undefined') arr.push(data.mat);
+      //   return arr;
+      // }, []);
+      // console.log({highlightMaterialNames: highlightMaterialNames});
+      // navLinks.map((linkElm, i) => {
+      //   var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
+      //   console.log({ data: data, i: i });
+      //   linkElm.addEventListener('click', (e) => {
+      //     // clear all other highlights
+      //     highlightMaterialNames.map((name) => {
+      //       setMat(name);
+      //     });
 
-          var tweenColor = function () {
-            // highlight this room
-            // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
-            var newColor = new THREE.Color('hsl(0, 0%, 100%)');
-            var newMat = new THREE.MeshPhongMaterial({color: newColor});
-            setMat(data.mat, newMat);
-            var initalColorVals = {a: 0, b: 0, c: 100};
-            var updateColor = function () {
-              newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
-              newMat.color = newColor;
-            };
-            TweenLite.to(initalColorVals, 1, {
-              a: 4,
-              b: 90,
-              c: 58,
-              onUpdate: updateColor
-            });
-          };
-          var start = {
-            x: camera.position.x,
-            y: camera.position.y,
-            z: camera.position.z,
-            xr: camera.rotation.x,
-            yr: camera.rotation.y,
-            zr: camera.rotation.z
-          };
-          var tween = TweenLite.to(start, 1, {
-            x: data.pos.x,
-            y: data.pos.y,
-            z: data.pos.z,
-            xr: data.rot._x,
-            yr: data.rot._y,
-            zr: data.rot._z,
-            onUpdate: updateCameraPos,
-            onComplete: typeof data.mat !== 'undefined' ? tweenColor : null
-          });
-          // each time the tween updates this function will be called.
-          function updateCameraPos () {
-            camera.position.set(start.x, start.y, start.z);
-            camera.rotation.set(start.xr, start.yr, start.zr, 'XYZ');
-            camera.updateMatrix();
-          }
-        });
+      //     var tweenColor = function () {
+      //       // highlight this room
+      //       // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
+      //       var newColor = new THREE.Color('hsl(0, 0%, 100%)');
+      //       var newMat = new THREE.MeshPhongMaterial({color: newColor});
+      //       setMat(data.mat, newMat);
+      //       var initalColorVals = {a: 0, b: 0, c: 100};
+      //       var updateColor = function () {
+      //         newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
+      //         newMat.color = newColor;
+      //       };
+      //       TweenLite.to(initalColorVals, 1, {
+      //         a: 4,
+      //         b: 90,
+      //         c: 58,
+      //         onUpdate: updateColor
+      //       });
+      //     };
+      //     var start = {
+      //       x: camera.position.x,
+      //       y: camera.position.y,
+      //       z: camera.position.z,
+      //       xr: camera.rotation.x,
+      //       yr: camera.rotation.y,
+      //       zr: camera.rotation.z
+      //     };
+      //     var tween = TweenLite.to(start, 1, {
+      //       x: data.pos.x,
+      //       y: data.pos.y,
+      //       z: data.pos.z,
+      //       xr: data.rot._x,
+      //       yr: data.rot._y,
+      //       zr: data.rot._z,
+      //       onUpdate: updateCameraPos,
+      //       onComplete: typeof data.mat !== 'undefined' ? tweenColor : null
+      //     });
+      //     // each time the tween updates this function will be called.
+      //     function updateCameraPos () {
+      //       camera.position.set(start.x, start.y, start.z);
+      //       camera.rotation.set(start.xr, start.yr, start.zr, 'XYZ');
+      //       camera.updateMatrix();
+      //     }
+      //   });
+      // });
+
+      // matrix camera transform
+      // var arrayTOobject = function (arr) {
+      //   var rv = {};
+      //   for (var i = 0; i < arr.length; ++i) rv[i] = arr[i];
+      //   return rv;
+      // };
+      var goalVals = JSON.parse('{"px":1034.2891868501865,"py":644.345722879885,"pz":-781.7799224479268,"qw":0.8148415951617541,"qx":-0.17521558256671904,"qy":0.5402209163299482,"qz":0.11616383249395688,"sx":1,"sy":1,"sz":1}');
+      var testELm = document.querySelector('nav.floorplan-nav li');
+      testELm.addEventListener('click', function () {
+        var currentCameraVals = flattenThreeObj(camera);
+        var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
+        console.log({vals: vals, goalVals: goalVals});
+        var updateCam = function () {
+          console.log({vals: vals, goalVals: goalVals});
+          camera.position.set(vals.px, vals.py, vals.pz);
+          camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
+          camera.scale.set(vals.sx, vals.sy, vals.sz);
+          camera.updateMatrix();
+          // camera.updateMatrixWorld(true);
+          // camera.matrixAutoUpdate = false;
+        };
+        goalVals.onUpdate = updateCam;
+        TweenLite.to(vals, 1, goalVals);
       });
+
+      // navLinks.map((linkElm, i) => {
+      //   var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
+      //   console.log({ data: data, i: i });
+      //   linkElm.addEventListener('click', (e) => {
+      //     // clear all other highlights
+      //     highlightMaterialNames.map((name) => {
+      //       setMat(name);
+      //     });
+
+      //     var tweenColor = function () {
+      //       // highlight this room
+      //       // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
+      //       var newColor = new THREE.Color('hsl(0, 0%, 100%)');
+      //       var newMat = new THREE.MeshPhongMaterial({color: newColor});
+      //       setMat(data.mat, newMat);
+      //       var initalColorVals = {a: 0, b: 0, c: 100};
+      //       var updateColor = function () {
+      //         newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
+      //         newMat.color = newColor;
+      //       };
+      //       TweenLite.to(initalColorVals, 1, {
+      //         a: 4,
+      //         b: 90,
+      //         c: 58,
+      //         onUpdate: updateColor
+      //       });
+      //     };
+      //     var start = {
+      //       x: camera.position.x,
+      //       y: camera.position.y,
+      //       z: camera.position.z,
+      //       xr: camera.rotation.x,
+      //       yr: camera.rotation.y,
+      //       zr: camera.rotation.z
+      //     };
+      //     var tween = TweenLite.to(start, 1, {
+      //       x: data.pos.x,
+      //       y: data.pos.y,
+      //       z: data.pos.z,
+      //       xr: data.rot._x,
+      //       yr: data.rot._y,
+      //       zr: data.rot._z,
+      //       onUpdate: updateCameraPos,
+      //       onComplete: typeof data.mat !== 'undefined' ? tweenColor : null
+      //     });
+      //     // each time the tween updates this function will be called.
+      //     function updateCameraPos () {
+      //       camera.position.set(start.x, start.y, start.z);
+      //       camera.rotation.set(start.xr, start.yr, start.zr, 'XYZ');
+      //       camera.updateMatrix();
+      //     }
+      //   });
+      // });
 
       // sketchup import
       var loader = new THREE.ColladaLoader();
@@ -235,7 +329,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   }
   function animate() {
     requestAnimationFrame(animate);
-    orbit.update();
+    // orbit.update();
     renderer.render(scene, camera);
   }
 });
