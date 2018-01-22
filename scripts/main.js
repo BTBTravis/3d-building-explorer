@@ -120,12 +120,17 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
 
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
-      var highlightMaterialNames = navLinks.reduce((arr, el) => {
+      var highlightMaterialNames = navLinks.reduce((arr, el) => { // list of materials that will get highlighted when going through navigation so be sure and clear these between clicks
         var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
         if (typeof data.mat !== 'undefined') arr.push(data.mat);
         return arr;
       }, []);
-      console.log({ highlightMaterialNames: highlightMaterialNames });
+      var hideMaterialNames = navLinks.reduce((arr, el) => { // list of materials that will get hidden when going through navigation so unhide each between clicks
+        var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
+        if (typeof data.hide !== 'undefined' && data.hide.length > 0) return data.hide.concat(arr);
+        return arr;
+      }, []);
+      console.log({ hideMaterialNames: hideMaterialNames });
       navLinks.map((linkElm, i) => {
         var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
         console.log({ data: data, i: i });
@@ -137,6 +142,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           highlightMaterialNames.map((name) => {
             setMat(name);
           });
+          // highlight current room
           var tweenColor = function () {
             // highlight this room
             // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
@@ -155,12 +161,13 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
               onUpdate: updateColor
             });
           };
+          // move camera into position
           var goalVals = data.transform;
           var currentCameraVals = flattenThreeObj(camera);
           var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
-          console.log({ vals: vals, goalVals: goalVals });
+          // console.log({ vals: vals, goalVals: goalVals });
           var updateCam = function () {
-            console.log({ vals: vals, goalVals: goalVals });
+            // console.log({ vals: vals, goalVals: goalVals });
             camera.position.set(vals.px, vals.py, vals.pz);
             camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
             camera.scale.set(vals.sx, vals.sy, vals.sz);
@@ -169,6 +176,17 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           goalVals.onUpdate = updateCam;
           if (typeof data.mat !== 'undefined') goalVals.onComplete = tweenColor;
           TweenLite.to(vals, 1, goalVals);
+
+          // unhide all hidable meshes
+          hideMaterialNames.map(function (matName) {
+            meshesByMaterial[matName].map(function (mesh) { mesh.layers.set(0); });
+          });
+          // hide geomerty that needs to be hidden
+          if (typeof data.hide !== 'undefined') {
+            data.hide.map(function (matName) {
+              meshesByMaterial[matName].map(function (mesh) { mesh.layers.set(2); });
+            });
+          }
         });
       });
 
