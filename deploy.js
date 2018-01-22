@@ -9,7 +9,7 @@ const cpFile = function (file, destDir) {
 
   source.pipe(dest);
   source.on('end', function () {
-    console.log('Successfully copied: ' + file);
+    console.log('Successfully copied: ' + file + ' at ' + Date.now());
   });
   source.on('error', function () {
     console.log('Error copying: ' + file);

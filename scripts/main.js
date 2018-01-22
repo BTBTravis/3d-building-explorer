@@ -106,26 +106,13 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       directionalLight.rotation.z = 25;
       scene.add(directionalLight);
 
-      // floor plane
-      var satelliteTx = new THREE.TextureLoader().load('/assets/js/3D/textures/arts_center_map.jpg');
-      var geometry = new THREE.PlaneGeometry(20000, 20000, 1);
-      var material = new THREE.MeshBasicMaterial({ map: satelliteTx });
-      // var material = new THREE.MeshBasicMaterial({color: 'black'});
-      var plane = new THREE.Mesh(geometry, material);
-      var factor = 1.25;
-      plane.scale.set(factor, factor, factor);
-      plane.rotation.set(-Math.PI / 2, 0, 0, 'XYZ');
-      plane.position.set(1000, -1, 400);
-      scene.add(plane);
-
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
-      var highlightMaterialNames = navLinks.reduce((arr, el) => {
+      var highlightMaterialNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
         var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
         if (typeof data.mat !== 'undefined') arr.push(data.mat);
         return arr;
       }, []);
-      console.log({ highlightMaterialNames: highlightMaterialNames });
       navLinks.map((linkElm, i) => {
         var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
         console.log({ data: data, i: i });
@@ -137,6 +124,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           highlightMaterialNames.map((name) => {
             setMat(name);
           });
+          // hight light rooms
           var tweenColor = function () {
             // highlight this room
             // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
@@ -155,6 +143,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
               onUpdate: updateColor
             });
           };
+          // move camera into place
           var goalVals = data.transform;
           var currentCameraVals = flattenThreeObj(camera);
           var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
