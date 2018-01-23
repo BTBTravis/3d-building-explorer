@@ -25,19 +25,20 @@ requirejs.config({
 });
 // load our modules in this order then run our code.
 requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
-  var devMode = false;
-  var camera, scene, svgScene, renderer, orbit, meshesByMaterial;
+  var devMode = false; // setting this to true enables orbit controlls
+  var camera, scene, renderer, orbit, meshesByMaterial;
   // var createDebugLine;
   // define base materials
   // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
-
   var baseMaterial = new THREE.MeshLambertMaterial({ color: baseColor });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
-    meshesByMaterial[key].map((mesh) => {
-      mesh.material = mat;
-    });
+    if (meshesByMaterial.hasOwnProperty(key)){
+      meshesByMaterial[key].map((mesh) => {
+        mesh.material = mat;
+      });
+    }
   };
   // util
   var flattenThreeObj = function (threeobj) {
@@ -107,22 +108,33 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       scene.add(directionalLight);
 
       // click through navigation
-      var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li'));
+      var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
+      var Location = function (str) { // was having trouble with the locations not being uniform so defining a location object to keep things little more orginized
+        var data = JSON.parse(str);
+        var exceptedKeys = ['transform', 'mat'];
+        for (var i = 0; i < exceptedKeys.length; i++) {
+          if (typeof data[exceptedKeys[i]] !== 'undefined') this[exceptedKeys[i]] = data[exceptedKeys[i]];
+          else this[exceptedKeys[i]] = false;
+        }
+      };
+      navLinks = navLinks.map(function (el) { // go though the li's and turn their data attr into a location obj and attach that as a property
+        el.location = new Location(el.getAttribute('data-room-3dinfo'));
+        return el;
+      });
+      console.log({navLinks: navLinks});
       var highlightMaterialNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
-        var data = JSON.parse(el.getAttribute('data-room-3dinfo'));
-        if (typeof data.mat !== 'undefined') arr.push(data.mat);
+        if (el.location.mat && !arr.includes(el.location.mat)) arr.push(el.location.mat);
         return arr;
       }, []);
       navLinks.map((linkElm, i) => {
-        var data = JSON.parse(linkElm.getAttribute('data-room-3dinfo'));
-        console.log({ data: data, i: i });
         linkElm.addEventListener('click', (e) => {
           // active styles
+          // TODO: perhaps move this to other js file so it's not so deep as its not really anything to do with 3d rendering
           navLinks.map(function (el) { el.classList.remove('default'); });
           linkElm.classList.add('default');
           // clear all other highlights
           highlightMaterialNames.map((name) => {
-            setMat(name);
+            setMat(name); // passing just the name and not a material sets it to the base material
           });
           // hight light rooms
           var tweenColor = function () {
@@ -130,7 +142,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
             var newColor = new THREE.Color('hsl(0, 0%, 100%)');
             var newMat = new THREE.MeshPhongMaterial({ color: newColor });
-            setMat(data.mat, newMat);
+            setMat(linkElm.location.mat, newMat);
             var initalColorVals = { a: 0, b: 0, c: 100 };
             var updateColor = function () {
               newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
@@ -144,7 +156,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             });
           };
           // move camera into place
-          var goalVals = data.transform;
+          var goalVals = linkElm.location.transform;
           var currentCameraVals = flattenThreeObj(camera);
           var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
           console.log({ vals: vals, goalVals: goalVals });
@@ -156,15 +168,10 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             camera.updateMatrix();
           };
           goalVals.onUpdate = updateCam;
-          if (typeof data.mat !== 'undefined') goalVals.onComplete = tweenColor;
+          if (linkElm.location.mat) goalVals.onComplete = tweenColor;
           TweenLite.to(vals, 1, goalVals);
         });
       });
-
-      var j = 1;
-      var g = 3;
-      var p = j + g;
-
       // sketchup import
       var loader = new THREE.ColladaLoader();
       loader.load('/assets/js/3D/models/arts_center_007.dae', function (result) {
@@ -202,7 +209,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
         });
         // modelRef.outerShell = outerShell;
         // move labels into place
-        var locationCubes = meshesByMaterial.location;
+        // var locationCubes = meshesByMaterial.location;
         // TODO: remove this dev code
         var mats = meshes.reduce((mats, mesh) => {
           if (!mats.includes(mesh.material.name)) mats.push(mesh.material.name);
