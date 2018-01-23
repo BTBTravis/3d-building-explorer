@@ -31,7 +31,12 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   // define base materials
   // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
-  var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
+  // var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
+  var baseMaterial = new THREE.MeshStandardMaterial({
+    color: baseColor,
+    roughness: 0.5,
+    metalness: 1.0
+  });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
     if (meshesByMaterial.hasOwnProperty(key)) {
@@ -208,27 +213,31 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           mesh.material.opacity = 0.4;
         });
         console.log({ meshesByMaterial: meshesByMaterial });
-        
         // interior lighting
+        let hemiLight = new THREE.HemisphereLight( 0xddeeff, 0x0f0e0d, 0.02 );
+        scene.add(hemiLight);
         meshesByMaterial.rec_light.map(function (mesh) {
-          const worldPos =  mesh.getWorldPosition();
+          const worldPos = mesh.getWorldPosition();
           mesh.layers.set(2);
-          let rectLight = new THREE.RectAreaLight(0xffffff, 700, 100, 100); // color, intensity, width, height
-          rectLight.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
-          rectLight.rotation.set(-Math.PI / 2, 0, 0, 'XYZ');
-          scene.add(rectLight);
-          let rectLightHelper = new THREE.RectAreaLightHelper(rectLight);
-          scene.add(rectLightHelper);
+          // let pointLight = new THREE.PointLight(0xff0000, 800, 100, 2);// color, intensity, distance, decay
+          let pointLight = new THREE.PointLight(0xffee88, 1, 100, 2);
+          pointLight.castShadow = true;
+          pointLight.power = 800;
+          pointLight.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
+          scene.add(pointLight);
+          var pointLightHelper = new THREE.PointLightHelper(pointLight, 10);
+          scene.add(pointLightHelper);
         });
-
-
-
-
         scene.add(model);
         resolve(); // fulfilled
       });
 
       renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.physicallyCorrectLights = true;
+      renderer.gammaInput = true;
+      renderer.gammaOutput = true;
+      renderer.shadowMap.enabled = true;
+      renderer.toneMapping = THREE.ReinhardToneMapping;
       renderer.setClearColor(0x000000, 0); // the default
       renderer.setPixelRatio(window.devicePixelRatio);
       // renderer.setPixelRatio(730 / 350);
