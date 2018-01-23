@@ -62,7 +62,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
     return new Promise((resolve, reject) => {
       // camera setup
       // camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 100, 10000);
-      camera = new THREE.PerspectiveCamera(70, 730 / 350, 100, 100000);
+      camera = new THREE.PerspectiveCamera(70, 730 / 350, 10, 100000);
       camera.position.x = 800;
       camera.position.y = 1400;
       camera.position.z = 3000;
@@ -177,7 +177,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             });
           };
           if (prevID === '9' && currentID === '10') {
-            let doorsTransform = JSON.parse('{"px":547.8035813921869,"py":300.58333634620533,"pz":2416.833743525899,"qw":0.9976567165276948,"qx":-0.04691722329335851,"qy":0.04974311856935126,"qz":0.002339290622278365,"sx":1,"sy":1,"sz":1}');
+            let doorsTransform = JSON.parse('{"px":608.3856154283419,"py":154.2044856053559,"pz":2285.2780043777298,"qw":0.9954344818313129,"qx":0.09509532437825026,"qy":0.008152612145483476,"qz":-0.0007788310638772835,"sx":1,"sy":1,"sz":1}');
             tweenCamTo(doorsTransform).then(function () {
               return tweenCamTo(linkElm.location.transform);
             });
@@ -203,16 +203,19 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           else if (currentItem.type === 'Group') arr = currentItem.children.reduce(sceneToMeshArray, arr);
           return arr;
         }, []);
-
+        // Put meshes into arrayes by material for orginization as material is only way we have to seprate them in sketchup
         meshesByMaterial = meshes.reduce(function (obj, mesh) {
           if (typeof obj[mesh.material.name] === 'undefined') obj[mesh.material.name] = [];
           obj[mesh.material.name].push(mesh);
           return obj;
         }, {});
         // set all to base mat
-        for (var key in meshesByMaterial) if (key !== 'shell') setMat(key);
+        for (var key in meshesByMaterial) if (key !== 'shell' && key !== 'wall_glass') setMat(key);
         meshesByMaterial.shell.map((mesh) => {
           mesh.material.opacity = 0.4;
+        });
+        meshesByMaterial.wall_glass.map((mesh) => {
+          mesh.material.opacity = 0.2;
         });
         console.log({ meshesByMaterial: meshesByMaterial });
         // interior lighting
