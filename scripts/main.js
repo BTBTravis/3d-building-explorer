@@ -32,6 +32,18 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
   var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
+  // var baseMaterial = new THREE.MeshPhongMaterial({
+  //   color: baseColor,
+  //   name: 'baseMat',
+  //   emissive: 'white',
+  //   emissiveIntensity: 0.25
+  // });
+
+  // var baseMaterial = new THREE.MeshStandardMaterial({
+  //   color: 0xffffff,
+  //   roughness: 0.5,
+  //   metalness: 1.0
+  // });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
     if (meshesByMaterial.hasOwnProperty(key)) {
@@ -101,11 +113,11 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       };
 
       // lights
-      // var light = new THREE.AmbientLight(0x404040); // soft white light
-      // scene.add(light);
-      // var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      // directionalLight.rotation.z = 25;
-      // scene.add(directionalLight);
+      let light = new THREE.AmbientLight(0x404040); // soft white light
+      scene.add(light);
+      let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.rotation.z = 25;
+      scene.add(directionalLight);
 
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
@@ -159,9 +171,9 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           var goalVals = linkElm.location.transform;
           var currentCameraVals = flattenThreeObj(camera);
           var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
-          console.log({ vals: vals, goalVals: goalVals });
+          // console.log({ vals: vals, goalVals: goalVals });
           var updateCam = function () {
-            console.log({ vals: vals, goalVals: goalVals });
+            // console.log({ vals: vals, goalVals: goalVals });
             camera.position.set(vals.px, vals.py, vals.pz);
             camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
             camera.scale.set(vals.sx, vals.sy, vals.sz);
@@ -208,21 +220,47 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           mesh.material.opacity = 0.4;
         });
         console.log({ meshesByMaterial: meshesByMaterial });
-        
         // interior lighting
+        // meshesByMaterial.rec_light.map(function (mesh) {
+        //   // mesh.material = new THREE.MeshPhongMaterial({
+        //   //   name: 'rec_light',
+        //   //   color: 'white',
+        //   //   emissive: 'white',
+        //   //   emissiveIntensity: 800
+        //   // });
+        //   const worldPos = mesh.getWorldPosition();
+        //   mesh.layers.set(2);
+        //   var spotLight = new THREE.SpotLight( 0xffffff );
+        //   let targetObject = new THREE.Object3D();
+        //   spotLight.position.set(worldPos.x, worldPos.y, worldPos.z);
+        //   targetObject.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
+        //   // spotLight.castShadow = true;
+        //   spotLight.distance = 2000; // - Maximum distance from origin where light will shine whose intensity is attenuated linearly based on distance from origin. 
+        //   // spotLight.angle = (Math.PI / 2) / 4 * 3; // - Maximum angle of light dispersion from its direction whose upper bound is Math.PI/2.
+        //   spotLight.angle = Math.PI / 2; // - Maximum angle of light dispersion from its direction whose upper bound is Math.PI/2.
+        //   spotLight.intensity = 0.5;
+        //   spotLight.penumbra = 0.5; // - Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. Default is zero.
+        //   spotLight.decay = 3; // - The amount the light dims along the distance of the light.
+        //   spotLight.shadow.mapSize.width = 512;
+        //   spotLight.shadow.mapSize.height = 512;
+        //   spotLight.shadow.camera.near = 500;
+        //   spotLight.shadow.camera.far = 4000;
+        //   spotLight.shadow.camera.fov = 30;
+        //   scene.add(spotLight);
+        //   scene.add(targetObject);
+        //   spotLight.target = targetObject;
+        // });
         meshesByMaterial.rec_light.map(function (mesh) {
-          const worldPos =  mesh.getWorldPosition();
+          const worldPos = mesh.getWorldPosition();
           mesh.layers.set(2);
-          let rectLight = new THREE.RectAreaLight(0xffffff, 700, 100, 100); // color, intensity, width, height
-          rectLight.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
-          rectLight.rotation.set(-Math.PI / 2, 0, 0, 'XYZ');
-          scene.add(rectLight);
-          let rectLightHelper = new THREE.RectAreaLightHelper(rectLight);
-          scene.add(rectLightHelper);
+          let light = new THREE.PointLight(0xffffff, 0.05, 100);
+          light.distance = 4000;
+          light.decay = 1;
+          light.position.set(worldPos.x, worldPos.y - 10, worldPos.z);
+          scene.add(light);
+          var pointLightHelper = new THREE.PointLightHelper(light, 10, 'red');
+          scene.add(pointLightHelper);
         });
-
-
-
 
         scene.add(model);
         resolve(); // fulfilled
