@@ -27,23 +27,9 @@ requirejs.config({
 requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
   var devMode = true; // setting this to true enables orbit controlls
   var camera, scene, renderer, orbit, meshesByMaterial;
-  // var createDebugLine;
   // define base materials
-  // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
   var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
-  // var baseMaterial = new THREE.MeshPhongMaterial({
-  //   color: baseColor,
-  //   name: 'baseMat',
-  //   emissive: 'white',
-  //   emissiveIntensity: 0.25
-  // });
-
-  // var baseMaterial = new THREE.MeshStandardMaterial({
-  //   color: 0xffffff,
-  //   roughness: 0.5,
-  //   metalness: 1.0
-  // });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
     if (meshesByMaterial.hasOwnProperty(key)) {
@@ -99,8 +85,6 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
 
       // scene setup
       scene = new THREE.Scene();
-      // svgScene = new THREE.Scene();
-      // scene.fog = new THREE.FogExp2('black', .0002);
       // debug setup
       createDebugLine = function (posVector, color) {
         var debugLineGeo = new THREE.Geometry();
@@ -206,50 +190,13 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           obj[mesh.material.name].push(mesh);
           return obj;
         }, {});
-        // hide location cubes by moving them to a layer that the camera is not rendering
-        // meshesByMaterial.location.map(function (mesh) {
-        //   mesh.layers.set(2);
-        // });
         // set all to base mat
         for (var key in meshesByMaterial) if (key !== 'shell') setMat(key);
-        // Get the outer shell by filter from the larges list of meshes
-        // var outerShell = meshes.filter((mesh) => { return mesh.material.name === 'material_8'; });
-        // setMat('shell', new THREE.MeshBasicMaterial({color: 'black', opacity: 0.4}));
         meshesByMaterial.shell.map((mesh) => {
-          // mesh.material = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.4});
           mesh.material.opacity = 0.4;
         });
         console.log({ meshesByMaterial: meshesByMaterial });
         // interior lighting
-        // meshesByMaterial.rec_light.map(function (mesh) {
-        //   // mesh.material = new THREE.MeshPhongMaterial({
-        //   //   name: 'rec_light',
-        //   //   color: 'white',
-        //   //   emissive: 'white',
-        //   //   emissiveIntensity: 800
-        //   // });
-        //   const worldPos = mesh.getWorldPosition();
-        //   mesh.layers.set(2);
-        //   var spotLight = new THREE.SpotLight( 0xffffff );
-        //   let targetObject = new THREE.Object3D();
-        //   spotLight.position.set(worldPos.x, worldPos.y, worldPos.z);
-        //   targetObject.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
-        //   // spotLight.castShadow = true;
-        //   spotLight.distance = 2000; // - Maximum distance from origin where light will shine whose intensity is attenuated linearly based on distance from origin. 
-        //   // spotLight.angle = (Math.PI / 2) / 4 * 3; // - Maximum angle of light dispersion from its direction whose upper bound is Math.PI/2.
-        //   spotLight.angle = Math.PI / 2; // - Maximum angle of light dispersion from its direction whose upper bound is Math.PI/2.
-        //   spotLight.intensity = 0.5;
-        //   spotLight.penumbra = 0.5; // - Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. Default is zero.
-        //   spotLight.decay = 3; // - The amount the light dims along the distance of the light.
-        //   spotLight.shadow.mapSize.width = 512;
-        //   spotLight.shadow.mapSize.height = 512;
-        //   spotLight.shadow.camera.near = 500;
-        //   spotLight.shadow.camera.far = 4000;
-        //   spotLight.shadow.camera.fov = 30;
-        //   scene.add(spotLight);
-        //   scene.add(targetObject);
-        //   spotLight.target = targetObject;
-        // });
         meshesByMaterial.rec_light.map(function (mesh) {
           const worldPos = mesh.getWorldPosition();
           mesh.layers.set(2);
