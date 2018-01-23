@@ -25,16 +25,16 @@ requirejs.config({
 });
 // load our modules in this order then run our code.
 requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
-  var devMode = false; // setting this to true enables orbit controlls
+  var devMode = true; // setting this to true enables orbit controlls
   var camera, scene, renderer, orbit, meshesByMaterial;
   // var createDebugLine;
   // define base materials
   // var baseColor = new THREE.Color('rgb(50%, 50%, 50%)');
   var baseColor = new THREE.Color('white');
-  var baseMaterial = new THREE.MeshLambertMaterial({ color: baseColor });
+  var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
   var setMat = function (key, mat = false) {
     if (!mat) mat = baseMaterial;
-    if (meshesByMaterial.hasOwnProperty(key)){
+    if (meshesByMaterial.hasOwnProperty(key)) {
       meshesByMaterial[key].map((mesh) => {
         mesh.material = mat;
       });
@@ -101,11 +101,11 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       };
 
       // lights
-      var light = new THREE.AmbientLight(0x404040); // soft white light
-      scene.add(light);
-      var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      directionalLight.rotation.z = 25;
-      scene.add(directionalLight);
+      // var light = new THREE.AmbientLight(0x404040); // soft white light
+      // scene.add(light);
+      // var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      // directionalLight.rotation.z = 25;
+      // scene.add(directionalLight);
 
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
@@ -207,16 +207,22 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           // mesh.material = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.4});
           mesh.material.opacity = 0.4;
         });
-        // modelRef.outerShell = outerShell;
-        // move labels into place
-        // var locationCubes = meshesByMaterial.location;
-        // TODO: remove this dev code
-        var mats = meshes.reduce((mats, mesh) => {
-          if (!mats.includes(mesh.material.name)) mats.push(mesh.material.name);
-          return mats;
-        }, []);
+        console.log({ meshesByMaterial: meshesByMaterial });
+        
+        // interior lighting
+        meshesByMaterial.rec_light.map(function (mesh) {
+          const worldPos =  mesh.getWorldPosition();
+          mesh.layers.set(2);
+          let rectLight = new THREE.RectAreaLight(0xffffff, 700, 100, 100); // color, intensity, width, height
+          rectLight.position.set(worldPos.x, worldPos.y - 100, worldPos.z);
+          rectLight.rotation.set(-Math.PI / 2, 0, 0, 'XYZ');
+          scene.add(rectLight);
+          let rectLightHelper = new THREE.RectAreaLightHelper(rectLight);
+          scene.add(rectLightHelper);
+        });
 
-        console.log({ mats: mats, meshesByMaterial: meshesByMaterial });
+
+
 
         scene.add(model);
         resolve(); // fulfilled
