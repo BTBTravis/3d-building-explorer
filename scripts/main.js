@@ -25,7 +25,7 @@ requirejs.config({
 });
 // load our modules in this order then run our code.
 requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
-  var devMode = true; // setting this to true enables orbit controlls
+  var devMode = false; // setting this to true enables orbit controlls
   var camera, scene, renderer, orbit, meshesByMaterial;
   // define base materials
   var baseColor = new THREE.Color('white');
@@ -125,6 +125,11 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       navLinks.map((linkElm, i) => {
         linkElm.addEventListener('click', (e) => {
           // active styles
+          const prevID = navLinks.reduce(function (id, el) {
+            if (el.classList.contains('default')) id = el.getAttribute('data-room-id');
+            return id;
+          }, null);
+          const currentID = linkElm.getAttribute('data-room-id');
           // TODO: perhaps move this to other js file so it's not so deep as its not really anything to do with 3d rendering
           navLinks.map(function (el) { el.classList.remove('default'); });
           linkElm.classList.add('default');
@@ -152,20 +157,34 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             });
           };
           // move camera into place
-          var goalVals = linkElm.location.transform;
-          var currentCameraVals = flattenThreeObj(camera);
-          var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
-          // console.log({ vals: vals, goalVals: goalVals });
-          var updateCam = function () {
-            // console.log({ vals: vals, goalVals: goalVals });
-            camera.position.set(vals.px, vals.py, vals.pz);
-            camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
-            camera.scale.set(vals.sx, vals.sy, vals.sz);
-            camera.updateMatrix();
+          // var goalVals = linkElm.location.transform;
+          var tweenCamTo = function (goalTransform) {
+            return new Promise(function (resolve, reject) {
+              const currentCameraVals = flattenThreeObj(camera);
+              var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
+              let updateCam = function () {
+                camera.position.set(vals.px, vals.py, vals.pz);
+                camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
+                camera.scale.set(vals.sx, vals.sy, vals.sz);
+                camera.updateMatrix();
+              };
+              goalTransform.onUpdate = updateCam;
+              goalTransform.onComplete = function () {
+                if (linkElm.location.mat) tweenColor();
+                resolve();
+              };
+              TweenLite.to(vals, 1, goalTransform);
+            });
           };
-          goalVals.onUpdate = updateCam;
-          if (linkElm.location.mat) goalVals.onComplete = tweenColor;
-          TweenLite.to(vals, 1, goalVals);
+          if (prevID === '9' && currentID === '10') {
+            let doorsTransform = JSON.parse('{"px":547.8035813921869,"py":300.58333634620533,"pz":2416.833743525899,"qw":0.9976567165276948,"qx":-0.04691722329335851,"qy":0.04974311856935126,"qz":0.002339290622278365,"sx":1,"sy":1,"sz":1}');
+            tweenCamTo(doorsTransform).then(function () {
+              return tweenCamTo(linkElm.location.transform);
+            });
+          } else {
+            tweenCamTo(linkElm.location.transform);
+          }
+          // {"px":547.8035813921869,"py":300.58333634620533,"pz":2416.833743525899,"qw":0.9976567165276948,"qx":-0.04691722329335851,"qy":0.04974311856935126,"qz":0.002339290622278365,"sx":1,"sy":1,"sz":1}
         });
       });
       // sketchup import
@@ -200,13 +219,13 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
         meshesByMaterial.rec_light.map(function (mesh) {
           const worldPos = mesh.getWorldPosition();
           mesh.layers.set(2);
-          let light = new THREE.PointLight(0xffffff, 0.05, 100);
+          let light = new THREE.PointLight(0xffffff, 0.03, 100);
           light.distance = 4000;
           light.decay = 1;
           light.position.set(worldPos.x, worldPos.y - 10, worldPos.z);
           scene.add(light);
-          var pointLightHelper = new THREE.PointLightHelper(light, 10, 'red');
-          scene.add(pointLightHelper);
+          // var pointLightHelper = new THREE.PointLightHelper(light, 10, 'red');
+          // scene.add(pointLightHelper);
         });
 
         scene.add(model);
