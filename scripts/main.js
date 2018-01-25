@@ -130,8 +130,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             return id;
           }, null);
           const currentID = linkElm.getAttribute('data-room-id');
-          // TODO: perhaps move this to other js file so it's not so deep as its not really anything to do with 3d rendering
-          navLinks.map(function (el) { el.classList.remove('default'); });
+          navLinks.map(function (el) { el.classList.remove('default'); }); // remove all active classes on the left menu
           linkElm.classList.add('default');
           // clear all other highlights
           highlightMaterialNames.map((name) => {
@@ -189,7 +188,7 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       });
       // sketchup import
       var loader = new THREE.ColladaLoader();
-      loader.load('/assets/js/3D/models/arts_center_007.dae', function (result) {
+      loader.load('/assets/js/3D/models/arts_center_008.dae', function (result) {
         // import matrix fixes
         result.scene.applyMatrix(result.scene.matrix.identity());
         result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
@@ -211,12 +210,18 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
         }, {});
         // set all to base mat
         for (var key in meshesByMaterial) if (key !== 'shell' && key !== 'wall_glass') setMat(key);
-        meshesByMaterial.shell.map((mesh) => {
+        meshesByMaterial.shell.map(function (mesh) {
           mesh.material.opacity = 0.4;
         });
-        meshesByMaterial.wall_glass.map((mesh) => {
+        meshesByMaterial.wall_glass.map(function (mesh) {
           mesh.material.opacity = 0.2;
         });
+        meshesByMaterial.existing.map(function (mesh) {
+          let mat = new THREE.MeshLambertMaterial({color: 'white'});
+          mesh.material = mat;
+        });
+
+
         console.log({ meshesByMaterial: meshesByMaterial });
         // interior lighting
         meshesByMaterial.rec_light.map(function (mesh) {
@@ -240,7 +245,8 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       renderer.setPixelRatio(window.devicePixelRatio);
       // renderer.setPixelRatio(730 / 350);
       renderer.setSize(730, 350);
-      var renderContainer = document.querySelector('.floorplan-container');
+      // var renderContainer = document.querySelector('.floorplan-container');
+      var renderContainer = document.getElementById('three-dee-explorer');
       // renderContainer.prepend(renderer.domElement);
       renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
       // document.body.appendChild(renderer.domElement);
