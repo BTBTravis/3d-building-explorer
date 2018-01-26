@@ -14,19 +14,14 @@ requirejs.config({
     },
     OrbitControls: {
       deps: ['THREE']
-    },
-    SVGRenderer: {
-      deps: ['THREE']
-    },
-    Projector: {
-      deps: ['THREE']
     }
   }
 });
 // load our modules in this order then run our code.
-requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls', 'TweenMax'], function (THREE) {
+requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THREE) {
   var devMode = false; // setting this to true enables orbit controlls
-  var camera, scene, renderer, orbit, meshesByMaterial;
+  var renderContainer = document.getElementById('three-dee-explorer');
+  var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial;
   // define base materials
   var baseColor = new THREE.Color('white');
   var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
@@ -55,25 +50,19 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
   };
   init().then(function (x) {
     animate();
+    let spinnerEl = renderContainer.querySelector('.spinner');
+    spinnerEl.parentNode.removeChild(spinnerEl);
   });
 
   // animate();
   function init () {
     return new Promise((resolve, reject) => {
       // camera setup
-      // camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 100, 10000);
-      camera = new THREE.PerspectiveCamera(70, 730 / 350, 10, 100000);
-      camera.position.x = 800;
-      camera.position.y = 1400;
-      camera.position.z = 3000;
-      camera.lookAt(new THREE.Vector3(0, 0, 0));
-
+      camera = new THREE.PerspectiveCamera(70, renderContainer.clientWidth / renderContainer.clientHeight, 10, 100000);
+      camera.position.set(593.405, 1121.285, 3165.17); // xyz
+      camera.quaternion.set(-0.3231, 0.2770, 0.099548, 0.89938); // xyzw
       // orbit setup
       if (devMode) orbit = new THREE.OrbitControls(camera);
-      // orbit.maxPolarAngle = 1.4095;
-      // orbit.minPolarAngle = 1.0799;
-      // orbit.enablePan = false;
-      // orbit.enableZoom = false;
       // TODO: Remove this dev code
       document.addEventListener('keydown', (e) => {
         if (e.key === 'm') {
@@ -82,32 +71,20 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
           console.log(JSON.stringify({ pos: camera.position, rot: camera.rotation }));
         }
       });
-
       // scene setup
       scene = new THREE.Scene();
-      // debug setup
-      createDebugLine = function (posVector, color) {
-        var debugLineGeo = new THREE.Geometry();
-        debugLineGeo.vertices.push(new THREE.Vector3(500, 500, 0));
-        debugLineGeo.vertices.push(new THREE.Vector3(0, 0, 0));
-        debugLineGeo.vertices.push(new THREE.Vector3(-500, 500, 0));
-        var debugLine = new THREE.Line(debugLineGeo, new THREE.LineBasicMaterial({ color: color }));
-        debugLine.position.set(posVector.x, posVector.y, posVector.z);
-        scene.add(debugLine);
-      };
-
-      // lights
+      // global lights - these are not assocated with any paticular location
       let light = new THREE.AmbientLight(0x404040); // soft white light
       scene.add(light);
       let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
       directionalLight.rotation.z = 25;
+      // directionalLight.quaternion.set(-0.3231, 0.2770, 0.099548, 0.89938); // xyzw
       scene.add(directionalLight);
-
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
       var Location = function (str) { // was having trouble with the locations not being uniform so defining a location object to keep things little more orginized
         var data = JSON.parse(str);
-        var exceptedKeys = ['transform', 'mat'];
+        var exceptedKeys = ['transform', 'mat', 'lights'];
         for (var i = 0; i < exceptedKeys.length; i++) {
           if (typeof data[exceptedKeys[i]] !== 'undefined') this[exceptedKeys[i]] = data[exceptedKeys[i]];
           else this[exceptedKeys[i]] = false;
@@ -117,11 +94,16 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
         el.location = new Location(el.getAttribute('data-room-3dinfo'));
         return el;
       });
-      console.log({navLinks: navLinks});
       var highlightMaterialNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
         if (el.location.mat && !arr.includes(el.location.mat)) arr.push(el.location.mat);
         return arr;
       }, []);
+      var lightNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
+        if (el.location.lights && !arr.includes(el.location.lights)) arr.push(el.location.lights);
+        return arr;
+      }, []);
+      console.log({lightNames: lightNames});
+      // iterate over the nav links and set up there click actions like camera, color, and light tweens
       navLinks.map((linkElm, i) => {
         linkElm.addEventListener('click', (e) => {
           // active styles
@@ -129,34 +111,49 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
             if (el.classList.contains('default')) id = el.getAttribute('data-room-id');
             return id;
           }, null);
-          const currentID = linkElm.getAttribute('data-room-id');
+          const currentID = linkElm.getAttribute('data-room-id'); // current location id assocated with the database record aka room id
           navLinks.map(function (el) { el.classList.remove('default'); }); // remove all active classes on the left menu
           linkElm.classList.add('default');
-          // clear all other highlights
-          highlightMaterialNames.map((name) => {
+          highlightMaterialNames.map((name) => { // clear all other highlights
             setMat(name); // passing just the name and not a material sets it to the base material
           });
-          // hight light rooms
-          var tweenColor = function () {
-            // highlight this room
-            // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
-            var newColor = new THREE.Color('hsl(0, 0%, 100%)');
-            var newMat = new THREE.MeshPhongMaterial({ color: newColor });
-            setMat(linkElm.location.mat, newMat);
-            var initalColorVals = { a: 0, b: 0, c: 100 };
-            var updateColor = function () {
-              newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
-              newMat.color = newColor;
-            };
-            TweenLite.to(initalColorVals, 1, {
-              a: 4,
-              b: 90,
-              c: 58,
-              onUpdate: updateColor
+          lightNames.map(function (name) { // turn off all the toggleable lights so we can turn them on again
+            let lightObjs = lightsByMaterial[name];
+            lightObjs.map(function (lightObj) {
+              lightObj.light.intensity = 0;
+            });
+          });
+          /**
+           * Tweens material assocated with linkElm.location.mat
+           * @param {matName} string ex: stage
+           */
+          var tweenColor = function (matName) {
+            return new Promise(function (resolve, reject) {
+              // highlight this room
+              // #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
+              var newColor = new THREE.Color('hsl(0, 0%, 100%)');
+              var newMat = new THREE.MeshPhongMaterial({ color: newColor });
+              setMat(matName, newMat);
+              var initalColorVals = { a: 0, b: 0, c: 100 };
+              var updateColor = function () {
+                newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
+                newMat.color = newColor;
+              };
+              TweenLite.to(initalColorVals, 1, {
+                a: 4,
+                b: 90,
+                c: 58,
+                onUpdate: updateColor,
+                onComplete: function () {
+                  resolve();
+                }
+              });
             });
           };
-          // move camera into place
-          // var goalVals = linkElm.location.transform;
+          /**
+           * Tweens the camera into place based on goalTransform pram
+           * @param {goalTransform} obj ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
+           */
           var tweenCamTo = function (goalTransform) {
             return new Promise(function (resolve, reject) {
               const currentCameraVals = flattenThreeObj(camera);
@@ -169,21 +166,50 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
               };
               goalTransform.onUpdate = updateCam;
               goalTransform.onComplete = function () {
-                if (linkElm.location.mat) tweenColor();
                 resolve();
               };
               TweenLite.to(vals, 1, goalTransform);
             });
           };
-          if (prevID === '9' && currentID === '10') {
-            let doorsTransform = JSON.parse('{"px":608.3856154283419,"py":154.2044856053559,"pz":2285.2780043777298,"qw":0.9954344818313129,"qx":0.09509532437825026,"qy":0.008152612145483476,"qz":-0.0007788310638772835,"sx":1,"sy":1,"sz":1}');
-            tweenCamTo(doorsTransform).then(function () {
-              return tweenCamTo(linkElm.location.transform);
+          /**
+           * Tweens lights assocated with linkElm.location.lights to a certin intensity
+           * @param {lightName} string ex: first_floor
+           */
+          var tweenLights = function (lightName) {
+            return new Promise(function (resolve, reject) {
+              // get lights
+              let lightObjs = lightsByMaterial[lightName];
+              var state = {intensity: 0};
+              var updateLights = function () {
+                lightObjs.map(function (lightObj) {
+                  lightObj.light.intensity = state.intensity;
+                });
+              };
+              TweenLite.to(state, 1, {
+                intensity: lightObjs[0].goalIntensity,
+                onUpdate: updateLights,
+                onComplete: function () {
+                  resolve();
+                }
+              });
             });
-          } else {
-            tweenCamTo(linkElm.location.transform);
-          }
-          // {"px":547.8035813921869,"py":300.58333634620533,"pz":2416.833743525899,"qw":0.9976567165276948,"qx":-0.04691722329335851,"qy":0.04974311856935126,"qz":0.002339290622278365,"sx":1,"sy":1,"sz":1}
+          };
+
+          (function () {
+            if (prevID === '9' && currentID === '10') {
+              let doorsTransform = JSON.parse('{"px":608.3856154283419,"py":154.2044856053559,"pz":2285.2780043777298,"qw":0.9954344818313129,"qx":0.09509532437825026,"qy":0.008152612145483476,"qz":-0.0007788310638772835,"sx":1,"sy":1,"sz":1}');
+              return tweenCamTo(doorsTransform);
+            } else return Promise.resolve();
+          })()
+          .then(function () {
+              return tweenCamTo(linkElm.location.transform);
+          })
+          .then(function () {
+            let promises = [];
+            if (linkElm.location.mat) promises.push(tweenColor(linkElm.location.mat));
+            if (linkElm.location.lights) promises.push(tweenLights(linkElm.location.lights));
+            return Promise.all(promises);
+          });
         });
       });
       // sketchup import
@@ -224,14 +250,16 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
 
         console.log({ meshesByMaterial: meshesByMaterial });
         // interior lighting
-        meshesByMaterial.rec_light.map(function (mesh) {
+        lightsByMaterial = {};
+        lightsByMaterial['first_floor'] = meshesByMaterial.rec_light.map(function (mesh) {
           const worldPos = mesh.getWorldPosition();
           mesh.layers.set(2);
-          let light = new THREE.PointLight(0xffffff, 0.03, 100);
-          light.distance = 4000;
+          let light = new THREE.PointLight(0xffffff, 0, 100);
+          light.distance = 2000;
           light.decay = 1;
           light.position.set(worldPos.x, worldPos.y - 10, worldPos.z);
           scene.add(light);
+          return {light: light, goalIntensity: 0.03};
           // var pointLightHelper = new THREE.PointLightHelper(light, 10, 'red');
           // scene.add(pointLightHelper);
         });
@@ -244,23 +272,19 @@ requirejs(['THREE', 'ColladaLoader', 'Projector', 'SVGRenderer', 'OrbitControls'
       renderer.setClearColor(0x000000, 0); // the default
       renderer.setPixelRatio(window.devicePixelRatio);
       // renderer.setPixelRatio(730 / 350);
-      renderer.setSize(730, 350);
-      // var renderContainer = document.querySelector('.floorplan-container');
-      var renderContainer = document.getElementById('three-dee-explorer');
-      // renderContainer.prepend(renderer.domElement);
+      renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
       renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
-      // document.body.appendChild(renderer.domElement);
       // window.addEventListener('resize', onWindowResize, false);
     });
   }
 
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-  function animate() {
-    requestAnimationFrame(animate);
+  // function onWindowResize () {
+  //   camera.aspect = window.innerWidth / window.innerHeight;
+  //   camera.updateProjectionMatrix();
+  //   renderer.setSize(window.innerWidth, window.innerHeight);
+  // }
+  function animate () {
+    requestAnimationFrame (animate);
     if (devMode) orbit.update();
     renderer.render(scene, camera);
   }
