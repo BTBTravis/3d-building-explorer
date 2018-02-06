@@ -65,6 +65,7 @@ requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THR
       if (devMode) orbit = new THREE.OrbitControls(camera);
       // TODO: Remove this dev code
       document.addEventListener('keydown', (e) => {
+        console.log({key: e.key});
         if (e.key === 'm') {
           console.log(JSON.stringify(flattenThreeObj(camera)));
         } else if (e.key === 'p') {
@@ -73,12 +74,31 @@ requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THR
       });
       // scene setup
       scene = new THREE.Scene();
+      // TODO: Remove this dev code
+      // let geo = new THREE.Geometry();
+      // geo.vertices.push(
+      //   new THREE.Vector3(600, 2000, 1000),
+      //   new THREE.Vector3(600, 0, 1000)
+      // );
+      // let line = new THREE.Line(geo, new THREE.LineBasicMaterial({color: 'blue'}));
+      // scene.add(line);
+
       // global lights - these are not assocated with any paticular location
       let light = new THREE.AmbientLight(0x404040); // soft white light
       scene.add(light);
       let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      directionalLight.rotation.z = 25;
-      // directionalLight.quaternion.set(-0.3231, 0.2770, 0.099548, 0.89938); // xyzw
+      directionalLight.position.set(0, 50, 0);
+      directionalLight.target.position.set(10, 10, -90);
+      // document.querySelector('body').addEventListener('keydown', function (e) {
+      //   if (e.key === 'ArrowRight') directionalLight.target.position.x += 10;
+      //   if (e.key === 'ArrowLeft') directionalLight.target.position.x -= 10;
+      //   if (e.key === 'ArrowUp') directionalLight.target.position.y += 10;
+      //   if (e.key === 'ArrowDown') directionalLight.target.position.y -= 10;
+      //   if (e.key === '=') directionalLight.target.position.z += 10;
+      //   if (e.key === '-') directionalLight.target.position.z -= 10;
+      //   console.log({directionalLightTargetPOS: directionalLight.target.position});
+      // });
+      scene.add(directionalLight.target);
       scene.add(directionalLight);
       // click through navigation
       var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
@@ -120,7 +140,7 @@ requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THR
           lightNames.map(function (name) { // turn off all the toggleable lights so we can turn them on again
             let lightObjs = lightsByMaterial[name];
             lightObjs.map(function (lightObj) {
-              lightObj.light.intensity = 0;
+              lightObj.light.intensity = 0; // TODO: actually turn off lights instead of setting their intensity to 0 might improve performance
             });
           });
           /**
@@ -202,7 +222,7 @@ requirejs(['THREE', 'ColladaLoader', 'OrbitControls', 'TweenMax'], function (THR
             } else return Promise.resolve();
           })()
           .then(function () {
-              return tweenCamTo(linkElm.location.transform);
+            return tweenCamTo(linkElm.location.transform);
           })
           .then(function () {
             let promises = [];
