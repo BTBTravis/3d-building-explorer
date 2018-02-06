@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "webpack-dev-server",
     "deploy": "node deploy.js",
     "deploy:watch": "watch 'npm run deploy' ."
   },
@@ -17,7 +18,9 @@
   "homepage": "https://bitbucket.org/BTBTravis/3d_room_explorer#readme",
   "devDependencies": {
     "colors": "^1.1.2",
-    "watch": "latest"
+    "watch": "latest",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.11.1"
   },
   "keywords": [
     "three.js",
@@ -28,5 +31,11 @@
     "javascript",
     "sketchup",
     "blender"
-  ]
+  ],
+  "dependencies": {
+    "gsap": "^1.20.3",
+    "three": "^0.89.0",
+    "three-collada-loader": "0.0.1",
+    "three-orbit-controls": "^82.1.0"
+  }
 }
