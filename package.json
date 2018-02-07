@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "webpack-dev-server",
+    "serve": "webpack-dev-server --port 3000 --hot --host 192.168.10.172",
     "deploy": "node deploy.js",
     "deploy:watch": "watch 'npm run deploy' ."
   },
@@ -34,6 +34,7 @@
   ],
   "dependencies": {
     "gsap": "^1.20.3",
+    "postprocessing": "^4.2.0",
     "three": "^0.89.0",
     "three-collada-loader": "0.0.1",
     "three-orbit-controls": "^82.1.0"

@@ -1,7 +1,10 @@
 const THREE = require('three'); // TODO: only import the part of the lib we need ex. import { Scene } from 'three'; .. should speed up load by reducing the bundeled js size.
 const OrbitControls = require('three-orbit-controls')(THREE);
 const ColladaLoader = require('three-collada-loader');
-import {TweenLite} from 'gsap';
+import { TweenLite } from 'gsap';
+import { Clock } from 'three';
+import { EffectComposer, FilmPass, RenderPass } from "postprocessing";
+
 
 var renderContainer = document.getElementById('building_explorer');
 let getSetting = function (setting) {
@@ -11,6 +14,7 @@ var devMode = getSetting('flymode'); // setting this to true enables orbit contr
 //devMode = true;
 // define global varables
 var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial;
+var composer, clock;
 //// define base materials
 //var baseColor = new THREE.Color('white');
 //var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
@@ -48,14 +52,13 @@ function init () {
     return new Promise((resolve, reject) => {
 
         // camera setup
-        camera = new THREE.PerspectiveCamera(70, 2/1.75, 10, 1000);
+        camera = new THREE.PerspectiveCamera(70, 2/1.75, 10, 10000);
         let initCamSettings = getSetting('inital-camera');
         camera.position.set(initCamSettings.px, initCamSettings.py, initCamSettings.pz); // xyz
         camera.quaternion.set(initCamSettings.qx, initCamSettings.qy, initCamSettings.qz, initCamSettings.qw); // xyzw
         //camera.filmGauge = 40;
-        camera.fov = 90;
+        //camera.fov = 90;
         camera.updateProjectionMatrix();
-        console.log({"camera": camera});
         // orbit setup
         if (devMode) orbit = new OrbitControls(camera);
         // camera pos tool
@@ -114,7 +117,7 @@ function init () {
         //console.log({lightNames: lightNames});
         //// iterate over the nav links and set up there click actions like camera, color, and light tweens
         locSettings.map((config, i) => {
-            console.log({"config": config});
+            //console.log({"config": config});
             let linkElm = document.querySelector(config.sel);
             linkElm.addEventListener('click', (e) => {
                 // active styles
@@ -245,8 +248,9 @@ function init () {
             // set all to base mat
             // TODO: allow for this kind of material customization
             //for (var key in meshesByMaterial) if (key !== 'shell' && key !== 'wall_glass') setMat(key);
-            //meshesByMaterial.shell.map(function (mesh) {
+            //meshesByMaterial.cyan.map(function (mesh) {
                 //mesh.material.opacity = 0.4;
+                //mesh.layers.set(2);
             //});
             //meshesByMaterial.wall_glass.map(function (mesh) {
                 //mesh.material.opacity = 0.2;
@@ -284,6 +288,17 @@ function init () {
         renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
         renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
         // window.addEventListener('resize', onWindowResize, false);
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const pass = new FilmPass({
+            scanlines: false,
+            noiseIntensity: 1
+        });
+        pass.renderToScreen = true;
+        composer.addPass(pass);
+
+        clock = new Clock();
     });
 }
 
@@ -295,5 +310,6 @@ function init () {
 function animate () {
     requestAnimationFrame (animate);
     if (devMode) orbit.update();
-    renderer.render(scene, camera);
+    //renderer.render(scene, camera);
+    composer.render(clock.getDelta());
 }
