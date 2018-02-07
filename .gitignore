@@ -1,3 +1,4 @@
 node_modules
 public/models
-.png
+*.png
+*.jpg

@@ -8,14 +8,23 @@ import { EffectComposer, FilmPass, RenderPass } from "postprocessing";
 
 var renderContainer = document.getElementById('building_explorer');
 let getSetting = function (setting) {
-    return JSON.parse(renderContainer.getAttribute('data-' + setting));
+    let data =  JSON.parse(renderContainer.getAttribute('data-' + setting));
+    if(data.hasOwnProperty('data')) data = data.data;
+    return data;
 }
 var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
 //devMode = true;
 // define global varables
 var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial;
 var composer, clock;
-//// define base materials
+// define base materials
+let matConfigs = getSetting('materials');
+console.log({"matConfigs": matConfigs});
+let materials = matConfigs.reduce(function (obj, config) {
+    obj[config.name] = new THREE.MeshPhongMaterial({ color: config.color, name: config.name });
+    return obj;
+}, {});
+console.log({"materials": materials});
 //var baseColor = new THREE.Color('white');
 //var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
 //var setMat = function (key, mat = false) {
@@ -247,7 +256,20 @@ function init () {
             }, {});
             // set all to base mat
             // TODO: allow for this kind of material customization
-            //for (var key in meshesByMaterial) if (key !== 'shell' && key !== 'wall_glass') setMat(key);
+
+            for (let key in meshesByMaterial) {
+                if(materials.hasOwnProperty(key)){
+                    meshesByMaterial[key].map(function (mesh) {
+                        mesh.material = materials[key];
+                    });
+                } else {
+                    meshesByMaterial[key].map(function (mesh) {
+                        mesh.material = new THREE.MeshPhongMaterial({ color: '#ff00fe', name: 'default' });
+                    });
+                }
+            }
+
+            //if (key !== 'shell' && key !== 'wall_glass') setMat(key);
             //meshesByMaterial.cyan.map(function (mesh) {
                 //mesh.material.opacity = 0.4;
                 //mesh.layers.set(2);
