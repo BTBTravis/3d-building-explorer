@@ -3,4 +3,4 @@ public/models
 *.png
 *.jpg
 build
-.orig
+*.orig
