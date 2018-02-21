@@ -5,7 +5,7 @@ import { TweenLite } from 'gsap';
 import { Clock } from 'three';
 import { EffectComposer, FilmPass, RenderPass } from "postprocessing";
 
-console.log("3D BUILDING EXPLORER");
+console.log("3D BUILDING EXPLORER!!!");
 
 var renderContainer = document.getElementById('building_explorer');
 let getSetting = function (setting) {
@@ -14,17 +14,16 @@ let getSetting = function (setting) {
     return data;
 }
 var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
-//devMode = true;
 // define global varables
-var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
+var views, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
 var composer, clock;
 // define base materials
 let matConfigs = getSetting('materials');
-//console.log({"matConfigs": matConfigs});
 let materials = matConfigs.reduce(function (obj, config) {
     obj[config.name] = new THREE.MeshPhongMaterial({ color: config.color, name: config.name });
     return obj;
 }, {});
+
 // util
 var flattenThreeObj = function (threeobj) {
     return {
@@ -40,6 +39,7 @@ var flattenThreeObj = function (threeobj) {
         sz: threeobj.scale.z
     };
 };
+
 // initlize everything as in load the 3d modeles prepare the scene then start the animation loop
 init().then(function (x) {
     animate();
@@ -50,15 +50,30 @@ init().then(function (x) {
 
 function init () {
     return new Promise((resolve, reject) => {
-
+        // view setup
+        views = [
+            {
+                left: 0,
+                top: 0,
+                width: 1.0,
+                height: 1.0,
+                //background: new THREE.Color( 0.5, 0.5, 0.7 ),
+                //eye: [ 0, 300, 1800 ],
+                //up: [ 0, 1, 0 ],
+                //fov: 30
+            }
+        ];
         // camera setup
-        camera = new THREE.PerspectiveCamera(70, 2/1.75, 10, 10000);
-        let initCamSettings = getSetting('inital-camera');
-        camera.position.set(initCamSettings.px, initCamSettings.py, initCamSettings.pz); // xyz
-        camera.quaternion.set(initCamSettings.qx, initCamSettings.qy, initCamSettings.qz, initCamSettings.qw); // xyzw
-        //camera.filmGauge = 40;
+        views.map(function (view) {
+            let initCamSettings = getSetting('inital-camera');
+            let camera = new THREE.PerspectiveCamera(70, 2/1.75, 10, 10000);
+            camera.position.set(initCamSettings.px, initCamSettings.py, initCamSettings.pz); // xyz
+            camera.quaternion.set(initCamSettings.qx, initCamSettings.qy, initCamSettings.qz, initCamSettings.qw); // xyzw
+            camera.updateProjectionMatrix();
+            view.camera = camera;
+        });
+
         //camera.fov = 90;
-        camera.updateProjectionMatrix();
         // orbit setup
         if (devMode) orbit = new OrbitControls(camera);
         // camera pos tool
