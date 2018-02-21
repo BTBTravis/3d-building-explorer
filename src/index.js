@@ -65,7 +65,7 @@ function init () {
                 top: 0,
                 width: 1.0,
                 height: 1.0,
-                background: new THREE.Color( 0.5, 0.5, 0.7 ),
+                //background: new THREE.Color( 0.5, 0.5, 0.7 ),
                 layer: 2,
                 //eye: [ 0, 300, 1800 ],
                 //up: [ 0, 1, 0 ],
@@ -142,100 +142,32 @@ function init () {
                             //mesh.material.transparent = true;
                     });
                 });
-                // TODO: find a different way to no previous location as to not rely on other DOM elements that we really don't know much about aka decouple as much as possible
-                //highlightMaterialNames.map((name) => { // clear all other highlights
-                    //setMat(name); // passing just the name and not a material sets it to the base material
-                //});
-                //lightNames.map(function (name) { // turn off all the toggleable lights so we can turn them on again
-                    //let lightObjs = lightsByMaterial[name];
-                    //lightObjs.map(function (lightObj) {
-                        //lightObj.light.intensity = 0; // TODO: actually turn off lights instead of setting their intensity to 0 might improve performance
-                    //});
-                //});
-                //*
-                // Tweens material assocated with linkElm.location.mat
-                // @param {matName} string ex: stage
-                //var tweenColor = function (matName) {
-                    //return new Promise(function (resolve, reject) {
-                        //// highlight this room
-                        //// #F44336 hsl(4, 90%, 58%)  base: hsl(0, 0%, 100%)
-                        //var newColor = new THREE.Color('hsl(0, 0%, 100%)');
-                        //var newMat = new THREE.MeshPhongMaterial({ color: newColor });
-                        //setMat(matName, newMat);
-                        //var initalColorVals = { a: 0, b: 0, c: 100 };
-                        //var updateColor = function () {
-                            //newColor = new THREE.Color('hsl(' + Math.round(initalColorVals.a) + ', ' + Math.round(initalColorVals.b) + '%, ' + Math.round(initalColorVals.c) + '%)');
-                            //newMat.color = newColor;
-                        //};
-                        //TweenLite.to(initalColorVals, 1, {
-                            //a: 4,
-                            //b: 90,
-                            //c: 58,
-                            //onUpdate: updateColor,
-                            //onComplete: function () {
-                                //resolve();
-                            //}
-                        //});
-                    //});
-                //};
-                //*
-                // Tweens the camera into place based on goalTransform pram
-                // @param {goalTransform} obj ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
-                var tweenCamTo = function (goalTransform) {
+
+                /**
+                * Tweens the camera into place based on goalTransform pram
+                * @param {obj} goalTransform ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
+                * @pram {THREE.camera} camera you want to tween
+                */
+                var tweenCamTo = function (goalTransform, cam) {
                     return new Promise(function (resolve, reject) {
-                        const currentCameraVals = flattenThreeObj(camera);
+                        let gt = Object.assign({}, goalTransform);
+                        const currentCameraVals = flattenThreeObj(cam);
                         var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
                         let updateCam = function () {
-                            camera.position.set(vals.px, vals.py, vals.pz);
-                            camera.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
-                            camera.scale.set(vals.sx, vals.sy, vals.sz);
-                            camera.updateMatrix();
+                            cam.position.set(vals.px, vals.py, vals.pz);
+                            cam.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
+                            cam.scale.set(vals.sx, vals.sy, vals.sz);
+                            cam.updateMatrix();
                         };
-                        goalTransform.onUpdate = updateCam;
-                        goalTransform.onComplete = function () {
+                        gt.onUpdate = updateCam;
+                        gt.onComplete = function () {
                             resolve();
                         };
-                        TweenLite.to(vals, 1, goalTransform);
+                        TweenLite.to(vals, 1, gt);
                     });
                 };
-                //*
-                 //Tweens lights assocated with linkElm.location.lights to a certin intensity
-                 //@param {lightName} string ex: first_floor
-                //var tweenLights = function (lightName) {
-                    //return new Promise(function (resolve, reject) {
-                        //// get lights
-                        //let lightObjs = lightsByMaterial[lightName];
-                        //var state = {intensity: 0};
-                        //var updateLights = function () {
-                            //lightObjs.map(function (lightObj) {
-                                //lightObj.light.intensity = state.intensity;
-                            //});
-                        //};
-                        //TweenLite.to(state, 1, {
-                            //intensity: lightObjs[0].goalIntensity,
-                            //onUpdate: updateLights,
-                            //onComplete: function () {
-                                //resolve();
-                            //}
-                        //});
-                    //});
-                //};
-
-                //(function () {
-                    //if (prevID === '9' && currentID === '10') {
-                        //let doorsTransform = JSON.parse('{"px":608.3856154283419,"py":154.2044856053559,"pz":2285.2780043777298,"qw":0.9954344818313129,"qx":0.09509532437825026,"qy":0.008152612145483476,"qz":-0.0007788310638772835,"sx":1,"sy":1,"sz":1}');
-                        //return tweenCamTo(doorsTransform);
-                    //} else return Promise.resolve();
-                //})()
-                    //.then(function () {
-                         tweenCamTo(config.transform);
-                    //})
-                    //.then(function () {
-                        //let promises = [];
-                        //if (linkElm.location.mat) promises.push(tweenColor(linkElm.location.mat));
-                        //if (linkElm.location.lights) promises.push(tweenLights(linkElm.location.lights));
-                        //return Promise.all(promises);
-                    //});
+                tweenCamTo(config.transform, views[0].camera);
+                tweenCamTo(config.transform, views[1].camera);
             });
         });
         // sketchup import
