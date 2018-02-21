@@ -2,8 +2,6 @@ const THREE = require('three'); // TODO: only import the part of the lib we need
 const OrbitControls = require('three-orbit-controls')(THREE);
 const ColladaLoader = require('three-collada-loader');
 import { TweenLite } from 'gsap';
-import { Clock } from 'three';
-import { EffectComposer, FilmPass, RenderPass } from "postprocessing";
 
 console.log("3D BUILDING EXPLORER!!!");
 
@@ -15,8 +13,7 @@ let getSetting = function (setting) {
 }
 var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
 // define global varables
-var views, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
-var composer, clock;
+var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
 // define base materials
 let matConfigs = getSetting('materials');
 let materials = matConfigs.reduce(function (obj, config) {
@@ -302,17 +299,6 @@ function init () {
         renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
         renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
         // window.addEventListener('resize', onWindowResize, false);
-        composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-
-        const pass = new FilmPass({
-            scanlines: false,
-            noiseIntensity: 1
-        });
-        pass.renderToScreen = true;
-        composer.addPass(pass);
-
-        clock = new Clock();
     });
 }
 
@@ -324,6 +310,5 @@ function init () {
 function animate () {
     requestAnimationFrame (animate);
     if (devMode) orbit.update();
-    //renderer.render(scene, camera);
-    composer.render(clock.getDelta());
+    renderer.render(scene, camera);
 }
