@@ -25,4 +25,6 @@ const cpFile = function (file, destDir) {
 
 // deployment files
 // cpFile('./scripts/main.js', './svgs/');
-cpFile('./scripts/main.js', '/Volumes/byte/schauer.office.diedrick.com/htdocs/assets/js/3D/scripts/');
+
+
+cpFile('./build/building_explorer.js', '/Volumes/byte/ca.office.diedrick.com/htdocs/the_mansion/');

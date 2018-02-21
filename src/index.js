@@ -5,6 +5,7 @@ import { TweenLite } from 'gsap';
 import { Clock } from 'three';
 import { EffectComposer, FilmPass, RenderPass } from "postprocessing";
 
+console.log("3D BUILDING EXPLORER");
 
 var renderContainer = document.getElementById('building_explorer');
 let getSetting = function (setting) {
@@ -15,27 +16,16 @@ let getSetting = function (setting) {
 var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
 //devMode = true;
 // define global varables
-var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial;
+var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
 var composer, clock;
 // define base materials
 let matConfigs = getSetting('materials');
-console.log({"matConfigs": matConfigs});
+//console.log({"matConfigs": matConfigs});
 let materials = matConfigs.reduce(function (obj, config) {
     obj[config.name] = new THREE.MeshPhongMaterial({ color: config.color, name: config.name });
     return obj;
 }, {});
-console.log({"materials": materials});
-//var baseColor = new THREE.Color('white');
-//var baseMaterial = new THREE.MeshPhongMaterial({ color: baseColor, name: 'baseMat' });
-//var setMat = function (key, mat = false) {
-    //if (!mat) mat = baseMaterial;
-    //if (meshesByMaterial.hasOwnProperty(key)) {
-        //meshesByMaterial[key].map((mesh) => {
-            //mesh.material = mat;
-        //});
-    //}
-//};
-//// util
+// util
 var flattenThreeObj = function (threeobj) {
     return {
         px: threeobj.position.x,
@@ -53,6 +43,7 @@ var flattenThreeObj = function (threeobj) {
 // initlize everything as in load the 3d modeles prepare the scene then start the animation loop
 init().then(function (x) {
     animate();
+    // TODO: bring spinner in house as to not rely on other things
     //let spinnerEl = renderContainer.querySelector('.spinner');
     //spinnerEl.parentNode.removeChild(spinnerEl);
 });
@@ -100,43 +91,29 @@ function init () {
         // });
         scene.add(directionalLight.target);
         scene.add(directionalLight);
-        // click through navigation
-        let locSettings = getSetting('camera-locations');
-        //var navLinks = Array.from(document.querySelectorAll('nav.floorplan-nav li')); // get the li's off the dom
-        //var Location = function (str) { // was having trouble with the locations not being uniform so defining a location object to keep things little more orginized
-            //var data = JSON.parse(str);
-            //for (var i = 0; i < exceptedKeys.length; i++) {
-                //if (typeof data[exceptedKeys[i]] !== 'undefined') this[exceptedKeys[i]] = data[exceptedKeys[i]];
-                //else this[exceptedKeys[i]] = false;
-            //}
-        //};
-        //navLinks = locSettings.map(function (config) { // go though the li's and turn their data attr into a location obj and attach that as a property
 
-            //el.location = new Location(el.getAttribute('data-room-3dinfo'));
-            //return el;
-        //});
-        //var highlightMaterialNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
-            //if (el.location.mat && !arr.includes(el.location.mat)) arr.push(el.location.mat);
-            //return arr;
-        //}, []);
-        //var lightNames = navLinks.reduce((arr, el) => { // figure out what materials are eligible to be highlighted so we can hightlight them between clicks
-            //if (el.location.lights && !arr.includes(el.location.lights)) arr.push(el.location.lights);
-            //return arr;
-        //}, []);
-        //console.log({lightNames: lightNames});
-        //// iterate over the nav links and set up there click actions like camera, color, and light tweens
+        // click through navigation
+        let locSettings = getSetting('camera-locations') ? getSetting('camera-locations') : [];
+        // iterate over the nav links and set up there click actions like camera, color, and light tweens
         locSettings.map((config, i) => {
-            //console.log({"config": config});
             let linkElm = document.querySelector(config.sel);
+            if(!linkElm) return false;
+
             linkElm.addEventListener('click', (e) => {
-                // active styles
-                //const prevID = navLinks.reduce(function (id, el) {
-                    //if (el.classList.contains('default')) id = el.getAttribute('data-room-id');
-                    //return id;
-                //}, null);
-                //const currentID = linkElm.getAttribute('data-room-id'); // current location id assocated with the database record aka room id
-                //navLinks.map(function (el) { el.classList.remove('default'); }); // remove all active classes on the left menu
-                linkElm.classList.add('default');
+                meshes.map(function (mesh) {
+                    //mesh.material.opacity = .5;
+                    //mesh.material = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
+                    //mesh.material =  new THREE.MeshPhongMaterial({ color: 'red', opacity: .5 });
+                    mesh.material.opacity = .75;
+                    mesh.material.transparent = true;
+                });
+                rooms.map(room => {
+                        room.children.map(function (mesh) {
+                        mesh.material =  new THREE.MeshPhongMaterial({ color: 'blue', opacity:.75 });
+                        mesh.material.transparent = true;
+                    });
+                });
+                // TODO: find a different way to no previous location as to not rely on other DOM elements that we really don't know much about aka decouple as much as possible
                 //highlightMaterialNames.map((name) => { // clear all other highlights
                     //setMat(name); // passing just the name and not a material sets it to the base material
                 //});
@@ -242,12 +219,12 @@ function init () {
             result.scene.updateMatrixWorld();
             console.log({ result: result });
             // Grab all the meshes from the scene
-            var meshes = result.scene.children.reduce(function sceneToMeshArray(arr, currentItem) {
+            meshes = result.scene.children.reduce(function sceneToMeshArray(arr, currentItem) {
                 if (currentItem.type === 'Mesh') arr.push(currentItem);
                 else if (currentItem.type === 'Object3D') arr = currentItem.children.reduce(sceneToMeshArray, arr);
                 return arr;
             }, []);
-            console.log({"meshes": meshes});
+            //console.log({"meshes": meshes});
             // Put meshes into arrayes by material for orginization as material is only way we have to seprate them in sketchup
             meshesByMaterial = meshes.reduce(function (obj, mesh) {
                 if (typeof obj[mesh.material.name] === 'undefined') obj[mesh.material.name] = [];
@@ -255,8 +232,6 @@ function init () {
                 return obj;
             }, {});
             // set all to base mat
-            // TODO: allow for this kind of material customization
-
             for (let key in meshesByMaterial) {
                 if(materials.hasOwnProperty(key)){
                     meshesByMaterial[key].map(function (mesh) {
@@ -268,7 +243,12 @@ function init () {
                     });
                 }
             }
-
+            rooms = result.scene.children.reduce(function getRooms (arr, obj) {
+                if(/^room_/.test(obj.name)) arr.push(obj);
+                if (obj.type === 'Object3D') arr = obj.children.reduce(getRooms, arr);
+                return arr;
+            }, [] );
+            console.log({"rooms": rooms});
             //if (key !== 'shell' && key !== 'wall_glass') setMat(key);
             //meshesByMaterial.cyan.map(function (mesh) {
                 //mesh.material.opacity = 0.4;
@@ -281,9 +261,6 @@ function init () {
                 //let mat = new THREE.MeshLambertMaterial({color: 'white'});
                 //mesh.material = mat;
             //});
-
-
-            console.log({ meshesByMaterial: meshesByMaterial });
             // interior lighting
             //lightsByMaterial = {};
             //lightsByMaterial['first_floor'] = meshesByMaterial.rec_light.map(function (mesh) {

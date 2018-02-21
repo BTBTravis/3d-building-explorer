@@ -2,3 +2,5 @@ node_modules
 public/models
 *.png
 *.jpg
+build
+
