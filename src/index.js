@@ -13,7 +13,7 @@ let getSetting = function (setting) {
 }
 var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
 // define global varables
-var camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
+var views, camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
 // define base materials
 let matConfigs = getSetting('materials');
 let materials = matConfigs.reduce(function (obj, config) {
@@ -54,16 +54,32 @@ function init () {
                 top: 0,
                 width: 1.0,
                 height: 1.0,
+                layer: 0
                 //background: new THREE.Color( 0.5, 0.5, 0.7 ),
+                //eye: [ 0, 300, 1800 ],
+                //up: [ 0, 1, 0 ],
+                //fov: 30
+            },
+            {
+                left: 0,
+                top: 0,
+                width: 1.0,
+                height: 1.0,
+                background: new THREE.Color( 0.5, 0.5, 0.7 ),
+                layer: 2,
                 //eye: [ 0, 300, 1800 ],
                 //up: [ 0, 1, 0 ],
                 //fov: 30
             }
         ];
+        //views.reverse();
+        console.log({"views": views});
         // camera setup
         views.map(function (view) {
             let initCamSettings = getSetting('inital-camera');
             let camera = new THREE.PerspectiveCamera(70, 2/1.75, 10, 10000);
+            camera.layers.disable(0);
+            camera.layers.enable(view.layer);
             camera.position.set(initCamSettings.px, initCamSettings.py, initCamSettings.pz); // xyz
             camera.quaternion.set(initCamSettings.qx, initCamSettings.qy, initCamSettings.qz, initCamSettings.qw); // xyzw
             camera.updateProjectionMatrix();
@@ -121,8 +137,9 @@ function init () {
                 });
                 rooms.map(room => {
                         room.children.map(function (mesh) {
-                        mesh.material =  new THREE.MeshPhongMaterial({ color: 'blue', opacity:.75 });
-                        mesh.material.transparent = true;
+                            //mesh.layers.set(2);
+                            //mesh.material =  new THREE.MeshPhongMaterial({ color: 'blue', opacity:.75 });
+                            //mesh.material.transparent = true;
                     });
                 });
                 // TODO: find a different way to no previous location as to not rely on other DOM elements that we really don't know much about aka decouple as much as possible
@@ -260,6 +277,11 @@ function init () {
                 if (obj.type === 'Object3D') arr = obj.children.reduce(getRooms, arr);
                 return arr;
             }, [] );
+            rooms.map(function (room) {
+                room.children.map(function (mesh) {
+                    mesh.layers.set(2);
+                });
+            });
             console.log({"rooms": rooms});
             //if (key !== 'shell' && key !== 'wall_glass') setMat(key);
             //meshesByMaterial.cyan.map(function (mesh) {
@@ -295,6 +317,7 @@ function init () {
         renderer = new THREE.WebGLRenderer({ alpha: true });
         renderer.setClearColor(0x000000, 0); // the default
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.autoClear = false;
         // renderer.setPixelRatio(730 / 350);
         renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
         renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
@@ -310,5 +333,14 @@ function init () {
 function animate () {
     requestAnimationFrame (animate);
     if (devMode) orbit.update();
-    renderer.render(scene, camera);
+    //views.map(function (view) {
+        //renderer.render(scene, view.camera);
+    //});
+    //renderer.render(scene, camera);
+    renderer.clear();
+    //renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+    renderer.render( scene, views[0].camera );
+    renderer.clearDepth(); // important! clear the depth buffer
+    //renderer.setViewport( 10, window.innerHeight - insetHeight - 10, insetWidth, insetHeight );
+    renderer.render( scene, views[1].camera );
 }
