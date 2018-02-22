@@ -132,17 +132,19 @@ function init () {
                     //mesh.material.opacity = .5;
                     //mesh.material = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
                     //mesh.material =  new THREE.MeshPhongMaterial({ color: 'red', opacity: .5 });
-                    mesh.material.opacity = .75;
-                    mesh.material.transparent = true;
+                    //mesh.material.opacity = .75;
+                    //mesh.material.transparent = true;
                 });
                 rooms.map(room => {
-                        room.children.map(function (mesh) {
-                            //mesh.layers.set(2);
-                            //mesh.material =  new THREE.MeshPhongMaterial({ color: 'blue', opacity:.75 });
-                            //mesh.material.transparent = true;
+                    room.children.map(function (mesh) {
+                        mesh.material.opacity = 0;
                     });
+                    if(config.hasOwnProperty('room_name') && room.name === config.room_name) {
+                        room.children.map(function (mesh) {
+                            mesh.material.opacity = 1;
+                        });
+                    }
                 });
-
                 /**
                 * Tweens the camera into place based on goalTransform pram
                 * @param {obj} goalTransform ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
@@ -212,35 +214,11 @@ function init () {
             rooms.map(function (room) {
                 room.children.map(function (mesh) {
                     mesh.layers.set(2);
+                    mesh.material =  new THREE.MeshBasicMaterial({ color: 'red', opacity: 0 });
+                    mesh.material.transparent = true;
                 });
             });
             console.log({"rooms": rooms});
-            //if (key !== 'shell' && key !== 'wall_glass') setMat(key);
-            //meshesByMaterial.cyan.map(function (mesh) {
-                //mesh.material.opacity = 0.4;
-                //mesh.layers.set(2);
-            //});
-            //meshesByMaterial.wall_glass.map(function (mesh) {
-                //mesh.material.opacity = 0.2;
-            //});
-            //meshesByMaterial.existing.map(function (mesh) {
-                //let mat = new THREE.MeshLambertMaterial({color: 'white'});
-                //mesh.material = mat;
-            //});
-            // interior lighting
-            //lightsByMaterial = {};
-            //lightsByMaterial['first_floor'] = meshesByMaterial.rec_light.map(function (mesh) {
-                //const worldPos = mesh.getWorldPosition();
-                //mesh.layers.set(2);
-                //let light = new THREE.PointLight(0xffffff, 0, 100);
-                //light.distance = 2000;
-                //light.decay = 1;
-                //light.position.set(worldPos.x, worldPos.y - 10, worldPos.z);
-                //scene.add(light);
-                //return {light: light, goalIntensity: 0.03};
-                //// var pointLightHelper = new THREE.PointLightHelper(light, 10, 'red');
-                //// scene.add(pointLightHelper);
-            //});
 
             scene.add(result.scene);
             resolve(); // fulfilled
@@ -257,11 +235,6 @@ function init () {
     });
 }
 
-// function onWindowResize () {
-//   camera.aspect = window.innerWidth / window.innerHeight;
-//   camera.updateProjectionMatrix();
-//   renderer.setSize(window.innerWidth, window.innerHeight);
-// }
 function animate () {
     requestAnimationFrame (animate);
     if (devMode) orbit.update();
