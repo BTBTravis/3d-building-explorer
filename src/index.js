@@ -137,11 +137,13 @@ function init () {
                 });
                 rooms.map(room => {
                     room.children.map(function (mesh) {
-                        mesh.material.opacity = 0;
+                        //mesh.material.opacity = 0;
+                        mesh.layers.set(3);
                     });
                     if(config.hasOwnProperty('room_name') && room.name === config.room_name) {
                         room.children.map(function (mesh) {
                             mesh.material.opacity = 1;
+                            mesh.layers.set(2);
                         });
                     }
                 });
