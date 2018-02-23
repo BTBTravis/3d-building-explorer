@@ -14,7 +14,7 @@
             background: url('ca_bg.png');
         }
         body{
-            background: url('site_bg.jpg');
+            background-color: #cbcac5;
         }
     </style>
 </head>
@@ -25,11 +25,14 @@
         data-flymode=0
         data-inital-camera='{"px":101.66756030345846,"py":796.3331817749057,"pz":502.8718389121419,"qw":0.9464821493196116,"qx":-0.2974579738163804,"qy":0.11949840157679664,"qz":0.037555650080545636,"sx":1,"sy":1,"sz":1}'
         data-camera-locations='[
-        {"sel":"#nav_btns button[data-loc-id=&#39;1&#39;]","transform":{"px":-978.1103068876712,"py":485.1911974779785,"pz":350.98855206445074,"qw":0.9159199669846987,"qx":-0.1714751826479817,"qy":-0.35668971868197646,"qz":-0.06677814313952053,"sx":1,"sy":1,"sz":1},"room_name":"room_dinning"},
-        {"sel":"#nav_btns button[data-loc-id=&#39;2&#39;]","transform":{"px":102.0680595056408,"py":1242.6908143567289,"pz":-1061.5444780551738,"qw":0.28404367824463317,"qx":-0.15783484220770397,"qy":0.8266772124134091,"qz":0.4593605750507152,"sx":1,"sy":1,"sz":1},"room_name":"room_hall"},
-        {"sel":"#nav_btns button[data-loc-id=&#39;3&#39;]","transform":{"px":549.6435095242391,"py":876.1198458276615,"pz":-1265.9618654192614,"qw":0.3759311236953401,"qx":-0.10982644543801502,"qy":0.8831979411388127,"qz":0.2580219736529662,"sx":1,"sy":1,"sz":1},"room_name":"room_kitchen"},
-        {"sel":"#nav_btns button[data-loc-id=&#39;4&#39;]","transform":{"px":474.84062162973146,"py":-256.3834885342531,"pz":-1602.758114295098,"qw":0.33896370540257426,"qx":0.02119263674358922,"qy":0.9387277804416414,"qz":-0.058690994153453684,"sx":1,"sy":1,"sz":1},"room_name":"room_game"},
-        {"sel":"#nav_btns button[data-loc-id=&#39;5&#39;]","transform":{"px":101.66756030345846,"py":796.3331817749057,"pz":502.8718389121419,"qw":0.9464821493196116,"qx":-0.2974579738163804,"qy":0.11949840157679664,"qz":0.037555650080545636,"sx":1,"sy":1,"sz":1}}
+        {"room_name":"room_billiards","sel":"button[data-room=&#39;6&#39;]","transform":{"px":706.6404555935457,"py":177.4803018879402,"pz":-1236.7523714201343,"qw":0.4500019400961591,"qx":0.010468169729832695,"qy":0.8927247071316389,"qz":-0.020767007702838444,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_dining","sel":"button[data-room=&#39;3&#39;]","transform":{"px":-871.7006320477486,"py":523.0710624398972,"pz":258.90237337951527,"qw":0.9009624711511796,"qx":-0.20830495312145558,"qy":-0.3708427577038413,"qz":-0.08573984570104012,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_french_parlor","sel":"button[data-room=&#39;7&#39;]","transform":{"px":523.2427483453787,"py":406.47412098835065,"pz":328.72019050257137,"qw":0.9203352525168934,"qx":-0.15794428522049556,"qy":0.3526663686998288,"qz":0.0605232032275975,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_enclosed_porch","sel":"button[data-room=&#39;5&#39;]","transform":{"px":-153.54493244498403,"py":543.4205766661611,"pz":603.5062171831632,"qw":0.9691802526817849,"qx":-0.24610914953362162,"qy":-0.010614126160127857,"qz":-0.0026953020917248475,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_marbel_hall","sel":"button[data-room=&#39;4&#39;]","transform":{"px":-409.7859396464472,"py":840.1504951104247,"pz":415.82255794370286,"qw":0.9149165684222422,"qx":-0.3703692547387827,"qy":-0.14875515150669666,"qz":-0.060217878332992886,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_kitchen","sel":"button[data-room=&#39;8&#39;]","transform":{"px":375.34427698663194,"py":1012.4648141439301,"pz":-1153.6147480694149,"qw":0.3482902389633894,"qx":-0.14099208680865236,"qy":0.8590077599859832,"qz":0.34773669519340333,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_main_stair","sel":"button[data-room=&#39;9&#39;]","transform":{"px":657.7368119799539,"py":984.1867561858527,"pz":-734.6183769400435,"qw":0.5593128407732121,"qx":-0.2171526305255649,"qy":0.745772919980524,"qz":0.28954556295296613,"sx":1,"sy":1,"sz":1}},
+        {"room_name":"room_charles_bedroom","sel":"button[data-room=&#39;10&#39;]","transform":{"px":763.2851785567148,"py":465.8067179869089,"pz":-1192.4134392215276,"qw":0.45907941618235315,"qx":-0.06867495251547585,"qy":0.8759896757991519,"qz":0.13104170491856246,"sx":1,"sy":1,"sz":1}}
         ]'
         data-materials='[
         {"name":"roof_tile","color":"#a87f76"},
@@ -42,11 +45,15 @@
         ]' 
     ></div>
     <div id='nav_btns'>
-        <button data-loc-id='1' >1</button>
-        <button data-loc-id='2' >2</button>
-        <button data-loc-id='3' >3</button>
-        <button data-loc-id='4' >4</button>
-        <button data-loc-id='5' >5</button>
+        <button data-room='6'>room_billiards</button>
+        <button data-room='3'>room_dining</button>
+        <button data-room='7'>room_french_parlor</button>
+        <button data-room='5'>room_enclosed_porch</button>
+        <button data-room='4'>room_marbel_hall</button>
+        <button data-room='8'>room_kitchen</button>
+        <button data-room='9'>room_main_stair</button>
+        <button data-room='10'>room_charles_bedroom</button>
+
     </div>
     <script src="../building_explorer.js"></script>
 </body>
