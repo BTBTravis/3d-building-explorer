@@ -55,24 +55,15 @@ function init () {
                 width: 1.0,
                 height: 1.0,
                 layer: 0
-                //background: new THREE.Color( 0.5, 0.5, 0.7 ),
-                //eye: [ 0, 300, 1800 ],
-                //up: [ 0, 1, 0 ],
-                //fov: 30
             },
             {
                 left: 0,
                 top: 0,
                 width: 1.0,
                 height: 1.0,
-                //background: new THREE.Color( 0.5, 0.5, 0.7 ),
                 layer: 2,
-                //eye: [ 0, 300, 1800 ],
-                //up: [ 0, 1, 0 ],
-                //fov: 30
             }
         ];
-        //views.reverse();
         console.log({"views": views});
         // camera setup
         views.map(function (view) {
@@ -88,12 +79,12 @@ function init () {
 
         //camera.fov = 90;
         // orbit setup
-        if (devMode) orbit = new OrbitControls(camera);
+        if (devMode) orbit = new OrbitControls(views[0].camera);
         // camera pos tool
         document.addEventListener('keydown', (e) => {
             console.log({key: e.key});
             if (e.key === 'm') {
-                console.log(JSON.stringify(flattenThreeObj(camera)));
+                console.log(JSON.stringify(flattenThreeObj(views[0].camera)));
             }
         });
 
@@ -182,7 +173,7 @@ function init () {
             result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
             result.scene.updateMatrix();
             result.scene.updateMatrixWorld();
-            console.log({ result: result });
+            //console.log({ result: result });
             // Grab all the meshes from the scene
             meshes = result.scene.children.reduce(function sceneToMeshArray(arr, currentItem) {
                 if (currentItem.type === 'Mesh') arr.push(currentItem);
@@ -216,7 +207,6 @@ function init () {
             }, [] );
             // initlize rooms
             rooms.map(function (room) {
-                console.log({"room": room});
                 room.children.map(function (threeObj) {
                     if(threeObj.type === "Object3D") {
                         threeObj = threeObj.children[0];
