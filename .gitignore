@@ -3,4 +3,5 @@ public/models
 *.png
 *.jpg
 build
-
+*.orig
+deploy.config.json
