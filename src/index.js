@@ -136,14 +136,14 @@ function init () {
                     //mesh.material.transparent = true;
                 });
                 rooms.map(room => {
-                    room.children.map(function (mesh) {
-                        //mesh.material.opacity = 0;
-                        mesh.layers.set(3);
+                    room.children.map(function (threeObj) {
+                        if(threeObj.type === "Object3D") threeObj = threeObj.children[0];
+                        threeObj.layers.set(3);
                     });
                     if(config.hasOwnProperty('room_name') && room.name === config.room_name) {
-                        room.children.map(function (mesh) {
-                            mesh.material.opacity = 1;
-                            mesh.layers.set(2);
+                        room.children.map(function (threeObj) {
+                            if(threeObj.type === "Object3D") threeObj = threeObj.children[0];
+                            threeObj.layers.set(2);
                         });
                     }
                 });
@@ -197,6 +197,7 @@ function init () {
                 return obj;
             }, {});
             // set all to base mat
+            console.log({"meshesByMaterial": meshesByMaterial});
             for (let key in meshesByMaterial) {
                 if(materials.hasOwnProperty(key)){
                     meshesByMaterial[key].map(function (mesh) {
@@ -213,11 +214,20 @@ function init () {
                 if (obj.type === 'Object3D') arr = obj.children.reduce(getRooms, arr);
                 return arr;
             }, [] );
+            // initlize rooms
             rooms.map(function (room) {
-                room.children.map(function (mesh) {
-                    mesh.layers.set(2);
-                    mesh.material =  new THREE.MeshBasicMaterial({ color: 'red', opacity: 0 });
-                    mesh.material.transparent = true;
+                console.log({"room": room});
+                room.children.map(function (threeObj) {
+                    if(threeObj.type === "Object3D") {
+                        threeObj = threeObj.children[0];
+                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#008eaf', opacity: 0.5 });
+                        threeObj.material.transparent = true;
+                        threeObj.layers.set(3);
+                    } else {
+                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#002A34', opacity: 0.5 });
+                        threeObj.material.transparent = true;
+                        threeObj.layers.set(3);
+                    }
                 });
             });
             console.log({"rooms": rooms});
