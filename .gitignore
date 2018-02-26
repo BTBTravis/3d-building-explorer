@@ -4,3 +4,4 @@ public/models
 *.jpg
 build
 *.orig
+deploy.config.json

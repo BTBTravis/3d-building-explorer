@@ -220,11 +220,11 @@ function init () {
                 room.children.map(function (threeObj) {
                     if(threeObj.type === "Object3D") {
                         threeObj = threeObj.children[0];
-                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#008eaf', opacity: 0.5 });
+                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#FEECCC', opacity: 0.5 });
                         threeObj.material.transparent = true;
                         threeObj.layers.set(3);
                     } else {
-                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#002A34', opacity: 0.5 });
+                        threeObj.material = new THREE.MeshBasicMaterial({ name: 'room_mat', color: '#E3C495', opacity: 0.5 });
                         threeObj.material.transparent = true;
                         threeObj.layers.set(3);
                     }

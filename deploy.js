@@ -1,6 +1,10 @@
 var fs = require('fs');
 var path = require('path');
 var colors = require('colors');
+// Laod Settings
+ var settingsFile = fs.readFileSync('deploy.config.json');
+// Define to JSON type
+ var settings = JSON.parse(settingsFile);
 
 const possibleTextColors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray', 'grey'];
 const possibleBackgroundColors = ['bgBlack', 'bgRed', 'bgGreen', 'bgYellow', 'bgBlue', 'bgMagenta', 'bgCyan', 'bgWhite'];
@@ -23,8 +27,8 @@ const cpFile = function (file, destDir) {
   });
 };
 
-// deployment files
-// cpFile('./scripts/main.js', './svgs/');
-
-
-cpFile('./build/building_explorer.js', '/Volumes/byte/ca.office.diedrick.com/htdocs/the_mansion/');
+//console.log({"settings": settings});
+// Copy files to remote
+settings.cp.map(function (x) {
+    cpFile(x.local, x.remote);
+});
