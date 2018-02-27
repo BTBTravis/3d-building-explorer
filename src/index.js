@@ -16,6 +16,7 @@ var debugMode = getSetting('debug-mode'); // setting this to true enables orbit 
 // define global varables
 var views, camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
 let parent;
+let camDir = new THREE.Vector3();
 // define base materials
 let matConfigs = getSetting('materials');
 let materials = matConfigs.reduce(function (obj, config) {
@@ -143,13 +144,56 @@ function init () {
                     }
                 });
                 // Tween Rotation
-                let rot = Object.assign({}, {y: config.rot});
-                let initRot = Object.assign({}, {y: parent.rotation.y});
-                rot.onUpdate = function () {
-                    parent.rotation.y = initRot.y;
+                var tweenRotTo = function (goalRot) {
+                    return new Promise(function (resolve, reject) {
+                        let rot = Object.assign({}, {y: goalRot});
+                        let initRot = Object.assign({}, {y: parent.rotation.y});
+                        rot.onUpdate = function () {
+                            parent.rotation.y = initRot.y;
+                        };
+                        rot.onComplete = function () {
+                            resolve();
+                        };
+                        TweenLite.to(initRot, 1, rot);
+                    });
                 };
-                TweenLite.to(initRot, 1, rot);
-                /**
+                var tweenDollyTo = function (goalDol, vs) {
+                    return new Promise(function (resolve, reject) {
+                        let dol = Object.assign({}, {a: goalDol});
+                        //let initDol = Object.assign({}, {y: parent.rotation.y});
+                        let initDol = Object.assign({}, {a: vs[0].axisVal});
+                        //let sign = dol.a > initDol.a ? 1 : -1;
+                        console.log({"initDol": initDol, "dol":dol});
+                        let initCamSettings = getSetting('inital-camera');
+                        dol.onUpdate = function () {
+                            let newPos = new THREE.Vector3();
+                            let initCamPos = new THREE.Vector3(initCamSettings.px, initCamSettings.py, initCamSettings.pz); // xyz
+                            newPos.copy(camDir);
+                            newPos.multiplyScalar(initDol.a);
+                            //newPos.addScalar(initDol.a);
+                            initCamPos.add(newPos);
+                            //console.log("A", initDol.a);
+                            vs[0].camera.position.copy(initCamPos);
+                            vs[1].camera.position.copy(initCamPos);
+                        };
+                        dol.onComplete = function () {
+                            vs[0].axisVal = dol.a;
+                            resolve();
+                        };
+                        TweenLite.to(initDol, 1, dol);
+                    });
+                };
+                //console.log({"Y": config.rot });
+
+                tweenDollyTo(1000, views)
+                .then(() => {
+                    return tweenRotTo(config.rot);
+                })
+                .then(() => {
+                    //return tweenDollyTo(config.axisVal, views[0])
+                    return tweenDollyTo(0, views)
+                });
+                                /**
                 * Tweens the camera into place based on goalTransform pram
                 * @param {obj} goalTransform ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
                 * @pram {THREE.camera} camera you want to tween
@@ -189,12 +233,36 @@ function init () {
             parent.add(pivot);
             pivot.position.set(0, 0, 500);
             pivot.add(result.scene);
+
+            //const camDir = new THREE.Vector3();
+            let tempV =  camDir.subVectors(views[0].camera.position, parent.position).normalize();
+            camDir = tempV.clone();
+            views.map(function (view) {
+                view.axisVal = 0;
+                return view;
+            });
+            //views[0].camera.lookAt(parent.position);
+            //var arrowHelper = new THREE.ArrowHelper( camDir, parent.position, 1000, 'red' );
+            //scene.add( arrowHelper );
             document.querySelector('body').addEventListener('keydown', function (e) {
                 if (e.key === 'd') parent.rotation.y += .05;
                 if (e.key === 's') parent.rotation.y -= .05;
-                console.log({"rotY": parent.rotation.y});
+                if (e.key === 'r') {
+                    let newPos = new THREE.Vector3();
+                    newPos.copy(camDir);
+                    newPos.multiplyScalar(100);
+                    views[0].camera.position.add(newPos);
+                    //views[0].camera.lookAt(parent.position);
+                }
+                if (e.key === 'f') {
+                    let newPos = new THREE.Vector3();
+                    newPos.copy(camDir);
+                    newPos.multiplyScalar(-100);
+                    views[0].camera.position.add(newPos);
+                    //views[0].camera.lookAt(parent.position);
+                }
             });
-            //console.log({ result: result });
+
             // Grab all the meshes from the scene
             meshes = result.scene.children.reduce(function sceneToMeshArray(arr, currentItem) {
                 if (currentItem.type === 'Mesh') arr.push(currentItem);
