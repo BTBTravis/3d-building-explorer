@@ -36,6 +36,13 @@ var flattenThreeObj = function (threeobj) {
         sz: threeobj.scale.z
     };
 };
+let makeBoxAt = function (x, y, z) {
+    var box = new THREE.Box3();
+    box.setFromCenterAndSize( new THREE.Vector3( x, y, z ), new THREE.Vector3( 100, 100, 100 ) );
+    var helper = new THREE.Box3Helper( box, 0xffff00 );
+    scene.add( helper );
+}
+
 
 // initlize everything as in load the 3d modeles prepare the scene then start the animation loop
 init().then(function (x) {
@@ -172,8 +179,25 @@ function init () {
             // import matrix fixes
             result.scene.applyMatrix(result.scene.matrix.identity());
             result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
-            result.scene.updateMatrix();
-            result.scene.updateMatrixWorld();
+            //result.scene.updateMatrix();
+            result.scene.matrixAutoUpdate  = true;
+            //result.scene.updateMatrixWorld();
+            let parent = new THREE.Object3D();
+            //parent.position.set(0, 500, 0);
+            //parent.position.set(1000, 0, 0);
+            scene.add( parent );
+            let pivot = new THREE.Object3D();
+            parent.add(pivot);
+            pivot.position.set(0, 0, 500);
+            //pivot.rotation.z = 2 * Math.PI / 3;
+            //result.scene.position.y = 1000;
+            pivot.add(result.scene);
+            document.querySelector('body').addEventListener('keydown', function (e) {
+                if (e.key === 'd') parent.rotation.y += .05;
+                if (e.key === 's') parent.rotation.y -= .05;
+                //result.scene.updateMatrix();
+                //result.scene.updateMatrixWorld();
+            });
             //console.log({ result: result });
             // Grab all the meshes from the scene
             meshes = result.scene.children.reduce(function sceneToMeshArray(arr, currentItem) {
@@ -223,7 +247,7 @@ function init () {
             });
             console.log({"rooms": rooms});
 
-            scene.add(result.scene);
+            //scene.add(result.scene);
             resolve(); // fulfilled
         });
 
@@ -235,6 +259,12 @@ function init () {
         renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
         renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
         // window.addEventListener('resize', onWindowResize, false);
+        if(devMode) {
+            var gridHelper = new THREE.GridHelper( 10000, 100 );
+            scene.add( gridHelper );
+            var axesHelper = new THREE.AxesHelper( 1000 );
+            scene.add( axesHelper );
+        }
     });
 }
 
