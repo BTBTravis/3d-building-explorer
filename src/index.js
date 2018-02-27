@@ -11,9 +11,11 @@ let getSetting = function (setting) {
     if(data.hasOwnProperty('data')) data = data.data;
     return data;
 }
-var devMode = getSetting('flymode'); // setting this to true enables orbit controlls
+var orbitMode = getSetting('orbit-mode'); // setting this to true enables orbit controlls
+var debugMode = getSetting('debug-mode'); // setting this to true enables orbit controlls
 // define global varables
 var views, camera, scene, renderer, orbit, meshesByMaterial, lightsByMaterial, rooms, meshes;
+let parent;
 // define base materials
 let matConfigs = getSetting('materials');
 let materials = matConfigs.reduce(function (obj, config) {
@@ -86,7 +88,7 @@ function init () {
 
         //camera.fov = 90;
         // orbit setup
-        if (devMode) orbit = new OrbitControls(views[0].camera);
+        if (orbitMode) orbit = new OrbitControls(views[0].camera);
         // camera pos tool
         document.addEventListener('keydown', (e) => {
             console.log({key: e.key});
@@ -119,58 +121,59 @@ function init () {
         scene.add(directionalLight);
 
         // click through navigation
-        let locSettings = getSetting('camera-locations') ? getSetting('camera-locations') : [];
+        let roomSettings = getSetting('room-infos') ? getSetting('room-infos') : [];
         // iterate over the nav links and set up there click actions like camera, color, and light tweens
-        locSettings.map((config, i) => {
+        roomSettings.map((config, i) => {
             let linkElm = document.querySelector(config.sel);
-            if(!linkElm) return false;
+            if(!linkElm) return false;// if we don't have an el to click to activate this room exit function
 
             linkElm.addEventListener('click', (e) => {
                 console.log({"config": config});
-                meshes.map(function (mesh) {
-                    //mesh.material.opacity = .5;
-                    //mesh.material = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
-                    //mesh.material =  new THREE.MeshPhongMaterial({ color: 'red', opacity: .5 });
-                    //mesh.material.opacity = .75;
-                    //mesh.material.transparent = true;
-                });
+                // handle moveing rooms to the correct layers
                 rooms.map(room => {
-                    room.children.map(function (threeObj) {
+                    room.children.map(function (threeObj) {// move all rooms to non visible layer
                         if(threeObj.type === "Object3D") threeObj = threeObj.children[0];
                         threeObj.layers.set(3);
                     });
-                    if(config.hasOwnProperty('room_name') && room.name === config.room_name) {
+                    if(config.hasOwnProperty('room_name') && room.name === config.room_name) { // move the selected room to the room layer
                         room.children.map(function (threeObj) {
                             if(threeObj.type === "Object3D") threeObj = threeObj.children[0];
                             threeObj.layers.set(2);
                         });
                     }
                 });
+                // Tween Rotation
+                let rot = Object.assign({}, {y: config.rot});
+                let initRot = Object.assign({}, {y: parent.rotation.y});
+                rot.onUpdate = function () {
+                    parent.rotation.y = initRot.y;
+                };
+                TweenLite.to(initRot, 1, rot);
                 /**
                 * Tweens the camera into place based on goalTransform pram
                 * @param {obj} goalTransform ex: {"px":807.8943218414179,"py":520.3328393399023,"pz":-799.3262672698474,"qw":0.7815924058567101,"qx":-0.24803634983789802,"qy":0.5455440573410596,"qz":0.17312701050404108,"sx":1,"sy":1,"sz":1}
                 * @pram {THREE.camera} camera you want to tween
                 */
-                var tweenCamTo = function (goalTransform, cam) {
-                    return new Promise(function (resolve, reject) {
-                        let gt = Object.assign({}, goalTransform);
-                        const currentCameraVals = flattenThreeObj(cam);
-                        var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
-                        let updateCam = function () {
-                            cam.position.set(vals.px, vals.py, vals.pz);
-                            cam.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
-                            cam.scale.set(vals.sx, vals.sy, vals.sz);
-                            cam.updateMatrix();
-                        };
-                        gt.onUpdate = updateCam;
-                        gt.onComplete = function () {
-                            resolve();
-                        };
-                        TweenLite.to(vals, 1, gt);
-                    });
-                };
-                tweenCamTo(config.transform, views[0].camera);
-                tweenCamTo(config.transform, views[1].camera);
+                //var tweenCamTo = function (goalTransform, cam) {
+                    //return new Promise(function (resolve, reject) {
+                        //let gt = Object.assign({}, goalTransform);
+                        //const currentCameraVals = flattenThreeObj(cam);
+                        //var vals = Object.assign({}, currentCameraVals); // clone obj to make sure we are not working with refs
+                        //let updateCam = function () {
+                            //cam.position.set(vals.px, vals.py, vals.pz);
+                            //cam.quaternion.set(vals.qx, vals.qy, vals.qz, vals.qw);
+                            //cam.scale.set(vals.sx, vals.sy, vals.sz);
+                            //cam.updateMatrix();
+                        //};
+                        //gt.onUpdate = updateCam;
+                        //gt.onComplete = function () {
+                            //resolve();
+                        //};
+                        //TweenLite.to(vals, 1, gt);
+                    //});
+                //};
+                //tweenCamTo(config.transform, views[0].camera);
+                //tweenCamTo(config.transform, views[1].camera);
             });
         });
         // sketchup import
@@ -179,24 +182,17 @@ function init () {
             // import matrix fixes
             result.scene.applyMatrix(result.scene.matrix.identity());
             result.scene.setRotationFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'XYZ'));
-            //result.scene.updateMatrix();
-            result.scene.matrixAutoUpdate  = true;
-            //result.scene.updateMatrixWorld();
-            let parent = new THREE.Object3D();
-            //parent.position.set(0, 500, 0);
-            //parent.position.set(1000, 0, 0);
+            //result.scene.matrixAutoUpdate  = true;
+            parent = new THREE.Object3D();
             scene.add( parent );
             let pivot = new THREE.Object3D();
             parent.add(pivot);
             pivot.position.set(0, 0, 500);
-            //pivot.rotation.z = 2 * Math.PI / 3;
-            //result.scene.position.y = 1000;
             pivot.add(result.scene);
             document.querySelector('body').addEventListener('keydown', function (e) {
                 if (e.key === 'd') parent.rotation.y += .05;
                 if (e.key === 's') parent.rotation.y -= .05;
-                //result.scene.updateMatrix();
-                //result.scene.updateMatrixWorld();
+                console.log({"rotY": parent.rotation.y});
             });
             //console.log({ result: result });
             // Grab all the meshes from the scene
@@ -259,7 +255,7 @@ function init () {
         renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
         renderContainer.insertAdjacentElement('afterbegin', renderer.domElement);
         // window.addEventListener('resize', onWindowResize, false);
-        if(devMode) {
+        if(debugMode) {
             var gridHelper = new THREE.GridHelper( 10000, 100 );
             scene.add( gridHelper );
             var axesHelper = new THREE.AxesHelper( 1000 );
@@ -270,7 +266,7 @@ function init () {
 
 function animate () {
     requestAnimationFrame (animate);
-    if (devMode) orbit.update();
+    if (orbitMode) orbit.update();
     //views.map(function (view) {
         //renderer.render(scene, view.camera);
     //});
