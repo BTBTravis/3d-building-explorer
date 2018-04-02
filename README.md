@@ -1,4 +1,4 @@
-# Byte 3D Building Explorer
+# 3D Building Explorer
 
 ## Dev Setup
 To start the dev server simply run
