@@ -1,10 +1,10 @@
 module.exports = [
     {
         name: "index",
-        entry: "./src/index.js",
+        entry: "./index.js",
         output: {
-            path: __dirname + "/build",
-            filename: "building_explorer.js"
+            path: __dirname + "/dist",
+            filename: "3d-building-explorer.js"
         }
     }
 ];

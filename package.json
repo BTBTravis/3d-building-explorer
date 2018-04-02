@@ -1,26 +1,30 @@
 {
-  "name": "byte_3d_building_explorer",
+  "name": "3D_Building_Explorer",
+  "author": "Travis Shears",
+  "homepage": "https://github.com/BTBTravis/3d-building-explorer",
   "version": "1.0.0",
-  "description": "Library Used for 3d building widgets ",
-  "main": "index.js",
+  "license": "MIT",
+  "description": "A library for turning SketchUp models into explore-able web experiences via Three.js",
+  "browser": "dist/3D-Building-Explorer.umd.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "webpack-dev-server --port 3000 --hot --host localhost",
-    "deploy": "node deploy.js",
-    "deploy:watch": "watch 'npm run deploy' ."
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "node test/test.js",
+    "pretest": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/BTBTravis/3d_room_explorer.git"
+    "url": "https://github.com/BTBTravis/3d-building-explorer.git"
   },
-  "author": "Travis Shears",
-  "license": "ISC",
-  "homepage": "https://bitbucket.org/BTBTravis/3d_room_explorer#readme",
   "devDependencies": {
-    "colors": "^1.1.2",
-    "watch": "latest",
-    "webpack": "^3.10.0",
-    "webpack-dev-server": "^2.11.1"
+    "babel-core": "^6.26.0",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
+    "rollup": "^0.57.0",
+    "rollup-plugin-babel": "^3.0.3",
+    "rollup-plugin-commonjs": "^9.1.0",
+    "rollup-plugin-eslint": "^4.0.0",
+    "rollup-plugin-node-resolve": "^3.0.0"
   },
   "keywords": [
     "three.js",
@@ -34,9 +38,11 @@
   ],
   "dependencies": {
     "gsap": "^1.20.3",
-    "postprocessing": "^4.2.0",
     "three": "^0.89.0",
     "three-collada-loader": "0.0.1",
     "three-orbit-controls": "^82.1.0"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
