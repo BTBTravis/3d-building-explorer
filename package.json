@@ -5,12 +5,11 @@
   "version": "1.0.0",
   "license": "MIT",
   "description": "A library for turning SketchUp models into explore-able web experiences via Three.js",
-  "browser": "dist/3D-Building-Explorer.umd.js",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "test": "node test/test.js",
-    "pretest": "npm run build"
+    "build": "env NODE_ENV=rollingup rollup -c",
+    "dev": "env NODE_ENV=rollingup rollup -c -w",
+    "test": "env NODE_ENV=testing mocha --compilers js:babel-register --require babel-polyfill ./test/test.js",
+    "test-watch": "env NODE_ENV=testing mocha -w --compilers js:babel-register --require babel-polyfill ./test/test.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +18,11 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-external-helpers": "^6.22.0",
+    "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.2",
+    "mocha": "^5.0.5",
     "rollup": "^0.57.0",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^9.1.0",
