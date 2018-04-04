@@ -6,7 +6,6 @@ const expect = chai.expect;
 const assert = chai.assert;
 const should = chai.should();
 
-
 let spec = configs();
 console.log('spec: ', spec);
 export default function () {
@@ -15,6 +14,7 @@ export default function () {
       let res = configValidator(spec.min);
       expect(res).to.have.property('errorMessages');
       assert.equal(res.errorMessages.length, 0);
+      assert.equal(res.hasError, false);
     });
     it('Empty Error Message', function(){
       let res = configValidator(spec.empty);
@@ -30,6 +30,10 @@ export default function () {
       let res = configValidator(spec.missingKey);
       expect(res).to.have.property('errorMessages');
       assert.equal(res.errorMessages.includes('missing config pram orbitMode'), true);
+    });
+    it('Invalid material', () => {
+      let res = configValidator(spec.invalidMaterial);
+      assert.equal(res.errorMessages.includes('Invalid color on material example_mat_5'), true);
     });
   });
 }

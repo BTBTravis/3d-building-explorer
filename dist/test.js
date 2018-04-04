@@ -4,11 +4,22 @@
   (global.test = factory());
 }(this, (function () { 'use strict';
 
+  var toConsumableArray = function (arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
+  };
+
   function configs () {
     var el = document.querySelector('#explorer');
     var badEl = document.querySelector('#exploafdifhdsifrer');
     var min = {
       el: el,
+      modelUrl: './models/example.dae',
       orbitMode: false,
       debugMode: false,
       initalCameraPos: {
@@ -19,40 +30,76 @@
         qx: -0.1503,
         qy: -0.2149,
         qz: -0.0335
-      }
+      },
+      cameraYoffset: 250,
+      cameraAspectFactor: 0.5,
+      materials: [{ name: 'example_mat_1', color: '#ffffff' }, { name: 'example_mat_2', color: '#a87f76' }, { name: 'example_mat_3', color: '#a87f76' }, { name: 'example_mat_4', color: '#a87f76' }],
+      rooms: [{ room_name: 'example_room_1', rot: -2.7, axisVal: 100 }]
     };
     var missingKey = Object.assign({}, min);
     delete missingKey.orbitMode;
+
+    var invalidMaterial = Object.assign({}, min);
+    invalidMaterial.materials = [].concat(toConsumableArray(min.materials), [{ name: 'example_mat_5', color: '#dfifhsea87f76' }]);
 
     return {
       empty: {},
       min: min,
       invalidEl: Object.assign({}, min, { el: badEl }),
-      missingKey: missingKey
+      missingKey: missingKey,
+      invalidMaterial: invalidMaterial
     };
   }
-  //export function diag(x, y) {
-  //return sqrt(square(x) + square(y));
-  //}
 
-  var configReqKeys = ["el", "orbitMode", "debugMode", "initalCameraPos"];
+  var configReqKeys = ['el', 'orbitMode', 'debugMode', 'initalCameraPos', 'materials', 'cameraAspectFactor', 'modelUrl', 'cameraYoffset'];
 
-  var checkForKeys = function checkForKeys(obj, reqKeys) {
-    return reqKeys.reduce(function (bool, key) {
-      return bool ? obj.hasOwnProperty(key) : bool;
-    }, true);
+  //let checkForKeys = (obj, reqKeys) => {
+  //let keys = Object.keys(obj);
+  //return reqKeys.reduce((bool, key) => {
+  //return bool ? obj.hasOwnProperty(key) : bool;
+  //}, true);
+  //};
+
+  var formatReturn = function formatReturn(config, ems) {
+    return {
+      config: config,
+      errorMessages: ems,
+      hasError: ems.length > 0
+    };
   };
 
   function configValidator (config) {
     var errorMessages = [];
-    if (!config.hasOwnProperty('el') || typeof config.el == 'undefined' || config.el == {}) errorMessages.push('Config is empty object please fill it with key pairs');else if (!config.el || config.el.tagName !== 'DIV') errorMessages.push('invalid el in config');else if (!checkForKeys(config, configReqKeys)) {
-      var missingKeys = configReqKeys.filter(function (key) {
+    // check el
+    errorMessages = !config.hasOwnProperty('el') || typeof config.el == 'undefined' || config.el == {} ? [].concat(toConsumableArray(errorMessages), ['Config is empty object please fill it with key pairs']) : errorMessages;
+    if (errorMessages.length > 0) return formatReturn(config, errorMessages);
+    // check el is div
+    errorMessages = !config.el || config.el.tagName !== 'DIV' ? [].concat(toConsumableArray(errorMessages), ['invalid el in config']) : errorMessages;
+    if (errorMessages.length > 0) return formatReturn(config, errorMessages);
+    // check req keys
+    errorMessages = function (ems, conf, rKeys) {
+      var missingKeys = rKeys.filter(function (key) {
         return !config.hasOwnProperty(key);
       });
       missingKeys.map(function (key) {
-        return errorMessages.push('missing config pram ' + key);
+        return ems.push('missing config pram ' + key);
       });
-    }
+      return ems;
+    }(errorMessages, config, configReqKeys);
+    if (errorMessages.length > 0) return formatReturn(config, errorMessages);
+    // check materials
+    errorMessages = function (ems, mats) {
+      var invalidMats = mats.reduce(function (arr, obj) {
+        var ismat = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(obj.color);
+        if (!ismat) arr.push(obj);
+        return arr;
+      }, []);
+      invalidMats.map(function (invalidMat) {
+        ems.push('Invalid color on material ' + invalidMat.name);
+      });
+      return ems;
+    }(errorMessages, config.materials);
+    if (errorMessages.length > 0) return formatReturn(config, errorMessages);
 
     return {
       config: config,
@@ -10780,6 +10827,7 @@
         var res = configValidator(spec.min);
         expect$1(res).to.have.property('errorMessages');
         assert$1.equal(res.errorMessages.length, 0);
+        assert$1.equal(res.hasError, false);
       });
       it('Empty Error Message', function () {
         var res = configValidator(spec.empty);
@@ -10795,6 +10843,10 @@
         var res = configValidator(spec.missingKey);
         expect$1(res).to.have.property('errorMessages');
         assert$1.equal(res.errorMessages.includes('missing config pram orbitMode'), true);
+      });
+      it('Invalid material', function () {
+        var res = configValidator(spec.invalidMaterial);
+        assert$1.equal(res.errorMessages.includes('Invalid color on material example_mat_5'), true);
       });
     });
   }
